@@ -1,6 +1,7 @@
 import base64
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 import os
 from typing import Dict, List, Optional, Tuple
 from PIL import Image
