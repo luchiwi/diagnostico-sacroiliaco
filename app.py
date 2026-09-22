@@ -1,33 +1,33 @@
-"""
-================================================================================
-SUITE CLÍNICA DE DIAGNÓSTICO BIOMECÁNICO SACROILÍACO E ILIOSACRO
-Versión: 2.2.0 Pro - Grado Clínico y Quiropráctico (Gonstead, Downslip/Upslip, PDF)
-Autor: Consultoría en Biomecánica Clínica y Software Médico
-================================================================================
-"""
-
 import base64
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+import os
 from typing import Dict, List, Optional, Tuple
+from PIL import Image
 import streamlit as st
 import streamlit.components.v1 as components
+
+# 1. Configuración de página (SIEMPRE la primera llamada de Streamlit)
+try:
+    icono = Image.open("assets/favicon.png")
+except Exception:
+    icono = "🦴"
+
+st.set_page_config(
+    page_title="Evaluación Sacroilíaca y Biomecánica 3D",
+    page_icon=icono,
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# 2. Resto de importaciones del proyecto
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
 from clinical_knowledge import CLINICAL_KNOWLEDGE_BASE, get_disfuncion_info
 
 # ==============================================================================
-# CONFIGURACIÓN DE PÁGINA Y ESTILOS CLÍNICOS
+# SUITE CLÍNICA DE DIAGNÓSTICO BIOMECÁNICO SACROILÍACO E ILIOSACRO
 # ==============================================================================
-
-st.set_page_config(
-    page_title="BioPelvis Pro | Diagnóstico Sacroilíaco y Pelviano",
-    page_icon="⚖️",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 CUSTOM_CSS = """
 <style>
@@ -810,7 +810,9 @@ def generar_visor_3d_pelvis(
     diagnostico: Optional[DiagnosticoBiomecanico] = None,
     preset_inicial: Optional[str] = None,
     lado_inicial: Optional[str] = None,
-    mostrar_ficha_didactica: bool = True
+    mostrar_ficha_didactica: bool = True,
+    es_modo_atlas: Optional[bool] = None,
+    altura_canvas: Optional[int] = None
 ) -> str:
     """
     Genera el Visor Anatómico 3D Pélvico Interactivo en 360° con Three.js y OrbitControls.
@@ -819,6 +821,11 @@ def generar_visor_3d_pelvis(
     Soporta presets biomecánicos del Atlas (PI, AS, Upslip, Downslip, Inflare, Outflare, Torsiones Sacras)
     y tarjeta didáctica flotante (listing, mecanismo, semiología, corrección).
     """
+    if es_modo_atlas is None:
+        es_modo_atlas = (diagnostico is None or (preset_inicial is not None and preset_inicial not in ["dysfunction", "neutral"]))
+    if altura_canvas is None:
+        altura_canvas = 740 if es_modo_atlas else 500
+
     if palpacion is not None:
         lado = lado_inicial or palpacion.lado_restriccion.value
         eias_str = str(palpacion.eias.value).lower()
@@ -865,6 +872,99 @@ def generar_visor_3d_pelvis(
     preset_init = preset_inicial or ("dysfunction" if diagnostico is not None else "pi")
     glb_b64 = _obtener_glb_pelvis_base64()
 
+    if es_modo_atlas:
+        bar_title_html = "<span>🦴 ATLAS Y VISOR 3D BIOMECÁNICO</span>"
+        status_badge_html = '<span id="status-badge" class="badge-status badge-dysfunction">🔴 SIMULACIÓN 3D</span>'
+        selectors_html = f"""
+                    <div class="toolbar-selectors-group">
+                        <!-- Selector de Categoría Biomecánica -->
+                        <div class="toolbar-control-group">
+                            <span class="toolbar-control-label">CAT:</span>
+                            <select id="atlas-category-select" class="v3d-select" onchange="onCategorySelectChange(this.value)">
+                                <option value="sagital">Rotacionales Sagitales</option>
+                                <option value="vertical">Cizallamientos Verticales</option>
+                                <option value="transversal">Transversales (Flares)</option>
+                                <option value="sacro">Torsiones Sacras</option>
+                            </select>
+                        </div>
+                        <!-- Selector de Disfunción Específica -->
+                        <div class="toolbar-control-group">
+                            <span class="toolbar-control-label">DISF:</span>
+                            <select id="atlas-dysfunction-select" class="v3d-select" onchange="applyAtlasPreset(this.value)">
+                                <!-- Opciones sincronizadas dinámicamente -->
+                            </select>
+                        </div>
+                        <!-- Selector de Lado (Hemipelvis) -->
+                        <div class="side-selector-group">
+                            <span class="toolbar-control-label">LADO:</span>
+                            <button id="side-btn-d" class="side-btn {'active' if is_right else ''}" onclick="setAtlasSide('Derecho')">[D] Der</button>
+                            <button id="side-btn-i" class="side-btn {'' if is_right else 'active'}" onclick="setAtlasSide('Izquierdo')">[I] Izq</button>
+                        </div>
+                    </div>"""
+        btn_ficha_html = '<button id="btn-toggle-didactic" class="v3d-btn active" onclick="toggleDidacticCardVisibility()">📖 Ficha</button>'
+        subtoolbar_html = f"""
+            <!-- Sub-barra de Galería de Presets Categorizados del Atlas -->
+            <div class="preset-subtoolbar">
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">SAGITAL:</span>
+                    <button id="btn-preset-pi" class="v3d-btn-preset {'active' if preset_init == 'pi' else ''}" onclick="applyAtlasPreset('pi')">PI (Retroversión)</button>
+                    <button id="btn-preset-as" class="v3d-btn-preset {'active' if preset_init == 'as' else ''}" onclick="applyAtlasPreset('as')">AS (Anteversión)</button>
+                </div>
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">VERTICAL:</span>
+                    <button id="btn-preset-up" class="v3d-btn-preset {'active' if preset_init == 'up' else ''}" onclick="applyAtlasPreset('up')">Upslip (Craneal)</button>
+                    <button id="btn-preset-down" class="v3d-btn-preset {'active' if preset_init == 'down' else ''}" onclick="applyAtlasPreset('down')">Downslip (Caudal)</button>
+                </div>
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">FLARES:</span>
+                    <button id="btn-preset-outflare" class="v3d-btn-preset {'active' if preset_init == 'outflare' else ''}" onclick="applyAtlasPreset('outflare')">Outflare (EX)</button>
+                    <button id="btn-preset-inflare" class="v3d-btn-preset {'active' if preset_init == 'inflare' else ''}" onclick="applyAtlasPreset('inflare')">Inflare (IN)</button>
+                </div>
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">SACRO:</span>
+                    <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Torsión Ant.</button>
+                    <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Torsión Post.</button>
+                </div>
+            </div>"""
+        didactic_card_html = """
+                <!-- Tarjeta Didáctica Flotante de Biomecánica y Prescripción -->
+                <div id="didacticCard" class="didactic-card-overlay">
+                    <div class="didactic-card-header" onclick="toggleDidacticCard()">
+                        <div class="didactic-card-title">
+                            <span>📚 FICHA DIDÁCTICA</span>
+                            <span id="didacticPresetBadge" class="didactic-badge">ILÍACO POSTERIOR (PI)</span>
+                        </div>
+                        <div class="didactic-card-actions">
+                            <button id="didacticToggleBtn" class="didactic-toggle-btn" title="Minimizar / Expandir">—</button>
+                        </div>
+                    </div>
+                    <div id="didacticCardBody" class="didactic-card-body">
+                        <div class="didactic-section">
+                            <span class="didactic-sec-title">🏷️ DENOMINACIÓN & LISTING:</span>
+                            <p id="didacticListing" class="didactic-sec-content"></p>
+                        </div>
+                        <div class="didactic-section">
+                            <span class="didactic-sec-title">💥 MECANISMO LESIONAL:</span>
+                            <p id="didacticMechanism" class="didactic-sec-content"></p>
+                        </div>
+                        <div class="didactic-section">
+                            <span class="didactic-sec-title">🔍 HALLAZGOS PALPATORIOS & TESTS:</span>
+                            <p id="didacticPalpation" class="didactic-sec-content"></p>
+                        </div>
+                        <div class="didactic-section">
+                            <span class="didactic-sec-title">🎯 VECTOR DE CORRECCIÓN (LOD / MET):</span>
+                            <p id="didacticCorrection" class="didactic-sec-content"></p>
+                        </div>
+                    </div>
+                </div>"""
+    else:
+        bar_title_html = "<span>🦴 VISOR 3D ANATÓMICO (PRE-AJUSTE)</span>"
+        status_badge_html = '<span id="status-badge" class="badge-status badge-dysfunction">🔴 CASO PACIENTE</span>'
+        selectors_html = ""
+        btn_ficha_html = ""
+        subtoolbar_html = ""
+        didactic_card_html = ""
+
     html = f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -893,7 +993,7 @@ def generar_visor_3d_pelvis(
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
                 width: 100%;
-                max-width: 980px;
+                max-width: 100%;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -1112,15 +1212,15 @@ def generar_visor_3d_pelvis(
                 color: #ffffff;
                 box-shadow: 0 0 6px rgba(56, 189, 248, 0.4);
             }}
-            /* Tarjeta Didáctica Flotante (Glassmorphism HUD) */
+            /* Tarjeta Didáctica Flotante (Glassmorphism HUD Lateral) */
             .didactic-card-overlay {{
                 position: absolute;
-                bottom: 8px;
-                right: 10px;
-                width: 350px;
-                max-width: calc(100% - 20px);
-                max-height: 380px;
-                background: rgba(11, 19, 41, 0.94);
+                top: 12px;
+                right: 14px;
+                width: 340px;
+                max-width: calc(100% - 28px);
+                max-height: calc(100% - 24px);
+                background: rgba(11, 19, 41, 0.92);
                 backdrop-filter: blur(12px);
                 -webkit-backdrop-filter: blur(12px);
                 border: 1px solid rgba(56, 189, 248, 0.4);
@@ -1135,7 +1235,7 @@ def generar_visor_3d_pelvis(
                 overflow: hidden;
             }}
             .didactic-card-overlay.minimized {{
-                max-height: 36px;
+                max-height: 38px;
             }}
             .didactic-card-header {{
                 padding: 7px 10px;
@@ -1185,7 +1285,7 @@ def generar_visor_3d_pelvis(
                 display: flex;
                 flex-direction: column;
                 gap: 7px;
-                max-height: 340px;
+                max-height: calc(100% - 44px);
             }}
             .didactic-card-body::-webkit-scrollbar {{
                 width: 4px;
@@ -1219,7 +1319,8 @@ def generar_visor_3d_pelvis(
             .canvas-area {{
                 position: relative;
                 width: 100%;
-                height: 440px;
+                height: {altura_canvas}px;
+                min-height: {altura_canvas}px;
                 background-color: #0b1329 !important;
                 display: flex;
                 justify-content: center;
@@ -1268,8 +1369,8 @@ def generar_visor_3d_pelvis(
             /* Badge flotante de desnivel e inclinación angular */
             .tilt-badge-overlay {{
                 position: absolute;
-                top: 10px;
-                right: 12px;
+                top: 76px;
+                left: 12px;
                 background: rgba(11, 19, 41, 0.92);
                 backdrop-filter: blur(10px);
                 border: 1px solid rgba(56, 189, 248, 0.35);
@@ -1410,34 +1511,10 @@ def generar_visor_3d_pelvis(
             <div class="top-toolbar">
                 <div class="title-badge-group">
                     <div class="title-text">
-                        <span>🦴 ATLAS Y VISOR 3D BIOMECÁNICO</span>
+                        {bar_title_html}
                     </div>
-                    <div class="toolbar-selectors-group">
-                        <!-- Selector de Categoría Biomecánica -->
-                        <div class="toolbar-control-group">
-                            <span class="toolbar-control-label">CAT:</span>
-                            <select id="atlas-category-select" class="v3d-select" onchange="onCategorySelectChange(this.value)">
-                                <option value="sagital">Rotacionales Sagitales</option>
-                                <option value="vertical">Cizallamientos Verticales</option>
-                                <option value="transversal">Transversales (Flares)</option>
-                                <option value="sacro">Torsiones Sacras</option>
-                            </select>
-                        </div>
-                        <!-- Selector de Disfunción Específica -->
-                        <div class="toolbar-control-group">
-                            <span class="toolbar-control-label">DISF:</span>
-                            <select id="atlas-dysfunction-select" class="v3d-select" onchange="applyAtlasPreset(this.value)">
-                                <!-- Opciones sincronizadas dinámicamente -->
-                            </select>
-                        </div>
-                        <!-- Selector de Lado (Hemipelvis) -->
-                        <div class="side-selector-group">
-                            <span class="toolbar-control-label">LADO:</span>
-                            <button id="side-btn-d" class="side-btn {'active' if is_right else ''}" onclick="setAtlasSide('Derecho')">[D] Der</button>
-                            <button id="side-btn-i" class="side-btn {'' if is_right else 'active'}" onclick="setAtlasSide('Izquierdo')">[I] Izq</button>
-                        </div>
-                    </div>
-                    <span id="status-badge" class="badge-status badge-dysfunction">🔴 SIMULACIÓN 3D</span>
+                    {selectors_html}
+                    {status_badge_html}
                 </div>
                 <div class="btn-group">
                     <button id="btn-dysfunction" class="v3d-btn {'active' if preset_init == 'dysfunction' else ''}" onclick="applyAtlasPreset('dysfunction')">⚡ Paciente</button>
@@ -1445,7 +1522,7 @@ def generar_visor_3d_pelvis(
                     <button id="btn-gait" class="v3d-btn" onclick="toggleGait()">▶ Marcha</button>
                     <button id="btn-toggle-landmarks" class="v3d-btn active" onclick="toggleLandmarks()">📍 Hitos</button>
                     <button id="btn-toggle-lines" class="v3d-btn active" onclick="toggleReferenceLines()">📏 Planos</button>
-                    <button id="btn-toggle-didactic" class="v3d-btn active" onclick="toggleDidacticCardVisibility()">📖 Ficha</button>
+                    {btn_ficha_html}
                     <label class="v3d-btn" style="cursor:pointer; margin:0;">
                         📁 GLB
                         <input type="file" id="glbFileInput" accept=".glb,.gltf" style="display:none;" onchange="handleFileSelect(event)">
@@ -1453,29 +1530,7 @@ def generar_visor_3d_pelvis(
                 </div>
             </div>
 
-            <!-- Sub-barra de Galería de Presets Categorizados del Atlas -->
-            <div class="preset-subtoolbar">
-                <div class="preset-category-group">
-                    <span class="preset-cat-label">SAGITAL:</span>
-                    <button id="btn-preset-pi" class="v3d-btn-preset {'active' if preset_init == 'pi' else ''}" onclick="applyAtlasPreset('pi')">PI (Retroversión)</button>
-                    <button id="btn-preset-as" class="v3d-btn-preset {'active' if preset_init == 'as' else ''}" onclick="applyAtlasPreset('as')">AS (Anteversión)</button>
-                </div>
-                <div class="preset-category-group">
-                    <span class="preset-cat-label">VERTICAL:</span>
-                    <button id="btn-preset-up" class="v3d-btn-preset {'active' if preset_init == 'up' else ''}" onclick="applyAtlasPreset('up')">Upslip (Craneal)</button>
-                    <button id="btn-preset-down" class="v3d-btn-preset {'active' if preset_init == 'down' else ''}" onclick="applyAtlasPreset('down')">Downslip (Caudal)</button>
-                </div>
-                <div class="preset-category-group">
-                    <span class="preset-cat-label">FLARES:</span>
-                    <button id="btn-preset-outflare" class="v3d-btn-preset {'active' if preset_init == 'outflare' else ''}" onclick="applyAtlasPreset('outflare')">Outflare (EX)</button>
-                    <button id="btn-preset-inflare" class="v3d-btn-preset {'active' if preset_init == 'inflare' else ''}" onclick="applyAtlasPreset('inflare')">Inflare (IN)</button>
-                </div>
-                <div class="preset-category-group">
-                    <span class="preset-cat-label">SACRO:</span>
-                    <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Torsión Ant.</button>
-                    <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Torsión Post.</button>
-                </div>
-            </div>
+            {subtoolbar_html}
 
             <div class="canvas-area" id="dropZone">
                 <div id="dragOverlay" class="drag-overlay">📂 Soltar archivo .GLB / .GLTF anatómico aquí</div>
@@ -1504,36 +1559,7 @@ def generar_visor_3d_pelvis(
                     </div>
                 </div>
 
-                <!-- Tarjeta Didáctica Flotante de Biomecánica y Prescripción -->
-                <div id="didacticCard" class="didactic-card-overlay">
-                    <div class="didactic-card-header" onclick="toggleDidacticCard()">
-                        <div class="didactic-card-title">
-                            <span>📚 FICHA DIDÁCTICA</span>
-                            <span id="didacticPresetBadge" class="didactic-badge">ILÍACO POSTERIOR (PI)</span>
-                        </div>
-                        <div class="didactic-card-actions">
-                            <button id="didacticToggleBtn" class="didactic-toggle-btn" title="Minimizar / Expandir">—</button>
-                        </div>
-                    </div>
-                    <div id="didacticCardBody" class="didactic-card-body">
-                        <div class="didactic-section">
-                            <span class="didactic-sec-title">🏷️ DENOMINACIÓN & LISTING:</span>
-                            <p id="didacticListing" class="didactic-sec-content"></p>
-                        </div>
-                        <div class="didactic-section">
-                            <span class="didactic-sec-title">💥 MECANISMO LESIONAL:</span>
-                            <p id="didacticMechanism" class="didactic-sec-content"></p>
-                        </div>
-                        <div class="didactic-section">
-                            <span class="didactic-sec-title">🔍 HALLAZGOS PALPATORIOS & TESTS:</span>
-                            <p id="didacticPalpation" class="didactic-sec-content"></p>
-                        </div>
-                        <div class="didactic-section">
-                            <span class="didactic-sec-title">🎯 VECTOR DE CORRECCIÓN (LOD / MET):</span>
-                            <p id="didacticCorrection" class="didactic-sec-content"></p>
-                        </div>
-                    </div>
-                </div>
+                {didactic_card_html}
 
                 <div id="webglCanvas"></div>
             </div>
@@ -1760,7 +1786,7 @@ def generar_visor_3d_pelvis(
                 }}
 
                 const width = container.clientWidth || 940;
-                const height = 440;
+                const height = container.clientHeight || {altura_canvas};
 
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x0b1329);
@@ -1886,10 +1912,23 @@ def generar_visor_3d_pelvis(
 
                 // Listeners de Resize y Drag & Drop
                 window.addEventListener('resize', onWindowResize);
+                setTimeout(onWindowResize, 80);
                 setupDragAndDrop();
 
                 // Loop de animación seguro
                 animate();
+            }}
+
+            function onWindowResize() {{
+                if (!container || !renderer || !camera) return;
+                const w = container.clientWidth || 940;
+                const h = container.clientHeight || {altura_canvas};
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                if (labelRenderer) {{
+                    labelRenderer.setSize(w, h);
+                }}
             }}
 
             // 4. CREACIÓN DE ETIQUETAS Y MARCADORES 3D (VECTORIAL CSS2D + FALLBACK SPRITE HD)
@@ -4230,7 +4269,9 @@ with tab_visualizador:
         with col_view_canvas:
             sim_html = generar_visor_3d_pelvis(
                 palpacion=palpacion_inst,
-                diagnostico=diagnostico_actual
+                diagnostico=diagnostico_actual,
+                es_modo_atlas=False,
+                altura_canvas=500
             )
             components.html(sim_html, height=580, scrolling=False)
 
@@ -4281,9 +4322,11 @@ with tab_visualizador:
             diagnostico=diagnostico_actual,
             preset_inicial="pi",
             lado_inicial="Derecho",
-            mostrar_ficha_didactica=True
+            mostrar_ficha_didactica=True,
+            es_modo_atlas=True,
+            altura_canvas=740
         )
-        components.html(atlas_html, height=620, scrolling=False)
+        components.html(atlas_html, height=820, scrolling=False)
 
         # Matriz Comparativa General de Consulta Rápida
         st.markdown("---")
