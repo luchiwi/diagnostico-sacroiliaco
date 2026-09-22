@@ -20,7 +20,10 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+from auth import render_auth_screen
 
+if not render_auth_screen():
+    st.stop()
 # 2. Resto de importaciones del proyecto
 from fpdf import FPDF
 from fpdf.enums import XPos, YPos
@@ -806,12 +809,67 @@ def _obtener_glb_pelvis_base64() -> str:
     return ""
 
 
+PRESET_TO_CK_KEY = {
+    "pi": "ILIACO_POSTERIOR",
+    "as": "ILIACO_ANTERIOR",
+    "up": "ILIACO_UPSLIP",
+    "down": "ILIACO_DOWNSLIP",
+    "outflare": "ILIACO_OUTFLARE",
+    "inflare": "ILIACO_INFLARE",
+    "torsion_ant": "TORSION_SACRA_ANTERIOR",
+    "torsion_post": "TORSION_SACRA_POSTERIOR"
+}
+
+ATLAS_PRESET_METADATA = {
+    "pi": {
+        "listing": "Gonstead: PI | Mitchell: Rotación Posterior | Osteopatía: Retroversión coxal",
+        "mecanismo": "Caída sentada sobre isquion, frenada brusca con rodilla en extensión, o flexión lumbar forzada con piernas estiradas.",
+        "cinematica_resumen": "Retroversión pura del coxal sobre la carilla auricular sacra S3. La EIAS se desplaza hacia póstero-superior, la EIPS desciende hacia póstero-inferior aproximándose al sacro, y la rama púbica asciende y se retrae hacia posterior.",
+    },
+    "as": {
+        "listing": "Gonstead: AS | Mitchell: Rotación Anterior | Osteopatía: Anteversión coxal",
+        "mecanismo": "Pisar en falso (escalón o bache), patada en vacío, extensión forzada de cadera en carrera o sobrecarga en fútbol/golf.",
+        "cinematica_resumen": "Anteversión pura del coxal sobre eje S3. La EIAS desciende y se proyecta hacia antero-inferior, la EIPS asciende y se lateraliza, y la sínfisis púbica desciende quedando prominente hacia anterior.",
+    },
+    "up": {
+        "listing": "Mitchell: Cizallamiento Craneal / Upslip | Gonstead: Subluxación Vertical Superior",
+        "mecanismo": "Impacto axial con rodilla en extensión rígida (caída de altura sobre talón, frenazo automovilístico con pie en freno, choque frontal).",
+        "cinematica_resumen": "Traslación cefálica en bloque de la hemipelvis completa sobre la superficie articular sacroilíaca. Cresta, EIAS, EIPS, isquion y pubis ascienden en igual magnitud. Pierna corta constante.",
+    },
+    "down": {
+        "listing": "Mitchell: Cizallamiento Caudal / Downslip | Gonstead: Subluxación Vertical Inferior",
+        "mecanismo": "Tracción brusca caudal del miembro inferior (pie atascado mientras el cuerpo avanza) o caída violenta con pierna colgando.",
+        "cinematica_resumen": "Traslación caudal en bloque de la hemipelvis completa. Cresta, EIAS, EIPS, isquion y pubis descienden en igual magnitud. Pierna larga constante.",
+    },
+    "outflare": {
+        "listing": "Mitchell: Outflare | Gonstead: EX (External) | Osteopatía: Apertura Ilíaca Externa",
+        "mecanismo": "Aducción forzada con rotación externa femoral, sobrecarga de abductores en ciclistas/patinadores o hipertonía de TFL/glúteo medio.",
+        "cinematica_resumen": "Rotación externa del ilíaco en el plano transverso sobre un eje vertical sacroilíaco. La EIAS se lateraliza (mayor distancia a la sínfisis/ombligo) y la EIPS se medializa comprimiendo el surco sacro.",
+    },
+    "inflare": {
+        "listing": "Mitchell: Inflare | Gonstead: IN (Internal) | Osteopatía: Cierre Ilíaco Interno",
+        "mecanismo": "Caída con cadera en abducción y rotación externa extrema, sobrecarga repetitiva en flexión/aducción.",
+        "cinematica_resumen": "Rotación interna del ilíaco en el plano transverso. La EIAS se medializa (menor distancia a la sínfisis/ombligo) y la EIPS se lateraliza alejándose del surco sacro.",
+    },
+    "torsion_ant": {
+        "listing": "Mitchell: Torsión Anterior (Derecha/Derecha o Izquierda/Izquierda) - Fisiológica",
+        "mecanismo": "Sobrecarga en flexión con rotación lumbar sincronizada durante la marcha o levantamiento asimétrico en bipedestación.",
+        "cinematica_resumen": "Nutación sacra unilateral sobre el eje oblicuo dinámico. La base sacra opuesta al eje se anterioriza profundamente en el surco, mientras el AIL contralateral se posterioriza e inferioriza. Elasticidad normal conservada.",
+    },
+    "torsion_post": {
+        "listing": "Mitchell: Torsión Posterior (Derecha/Izquierda o Izquierda/Derecha) - No Fisiológica",
+        "mecanismo": "Flexión brusca de tronco con carga excéntrica inesperada o traumatismo en caída que atrapa el sacro en contra-nutación fija.",
+        "cinematica_resumen": "Contra-nutación sacra posterior sobre el eje oblicuo. La base sacra se posterioriza prominentemente hacia atrás, quedando plana, rígida y dolorosa. Spring test francamente positivo (bloqueo rígido en tabla).",
+    },
+}
+
+
 def generar_visor_3d_pelvis(
     palpacion: Optional[ExamenPalpatorio] = None,
     diagnostico: Optional[DiagnosticoBiomecanico] = None,
     preset_inicial: Optional[str] = None,
     lado_inicial: Optional[str] = None,
-    mostrar_ficha_didactica: bool = True,
+    mostrar_ficha_didactica: bool = False,
     es_modo_atlas: Optional[bool] = None,
     altura_canvas: Optional[int] = None
 ) -> str:
@@ -825,7 +883,7 @@ def generar_visor_3d_pelvis(
     if es_modo_atlas is None:
         es_modo_atlas = (diagnostico is None or (preset_inicial is not None and preset_inicial not in ["dysfunction", "neutral"]))
     if altura_canvas is None:
-        altura_canvas = 740 if es_modo_atlas else 500
+        altura_canvas = 850
 
     if palpacion is not None:
         lado = lado_inicial or palpacion.lado_restriccion.value
@@ -902,7 +960,6 @@ def generar_visor_3d_pelvis(
                             <button id="side-btn-i" class="side-btn {'' if is_right else 'active'}" onclick="setAtlasSide('Izquierdo')">[I] Izq</button>
                         </div>
                     </div>"""
-        btn_ficha_html = '<button id="btn-toggle-didactic" class="v3d-btn active" onclick="toggleDidacticCardVisibility()">📖 Ficha</button>'
         subtoolbar_html = f"""
             <!-- Sub-barra de Galería de Presets Categorizados del Atlas -->
             <div class="preset-subtoolbar">
@@ -927,7 +984,9 @@ def generar_visor_3d_pelvis(
                     <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Torsión Post.</button>
                 </div>
             </div>"""
-        didactic_card_html = """
+        if mostrar_ficha_didactica:
+            btn_ficha_html = '<button id="btn-toggle-didactic" class="v3d-btn active" onclick="toggleDidacticCardVisibility()">📖 Ficha</button>'
+            didactic_card_html = """
                 <!-- Tarjeta Didáctica Flotante de Biomecánica y Prescripción -->
                 <div id="didacticCard" class="didactic-card-overlay">
                     <div class="didactic-card-header" onclick="toggleDidacticCard()">
@@ -958,6 +1017,9 @@ def generar_visor_3d_pelvis(
                         </div>
                     </div>
                 </div>"""
+        else:
+            btn_ficha_html = ""
+            didactic_card_html = ""
     else:
         bar_title_html = "<span>🦴 VISOR 3D ANATÓMICO (PRE-AJUSTE)</span>"
         status_badge_html = '<span id="status-badge" class="badge-status badge-dysfunction">🔴 CASO PACIENTE</span>'
@@ -979,14 +1041,14 @@ def generar_visor_3d_pelvis(
                 user-select: none;
             }}
             html, body {{
+                margin: 0;
+                padding: 0;
                 width: 100%;
                 height: 100%;
+                overflow: hidden;
                 background-color: #0b1329 !important;
                 color: #e2e8f0;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-                margin: 0;
-                padding: 4px;
-                overflow: hidden;
             }}
             .viewer-container {{
                 background-color: #0b1329 !important;
@@ -994,10 +1056,10 @@ def generar_visor_3d_pelvis(
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
                 width: 100%;
+                height: 100%;
                 max-width: 100%;
                 display: flex;
                 flex-direction: column;
-                align-items: center;
                 position: relative;
                 overflow: hidden;
             }}
@@ -1317,11 +1379,24 @@ def generar_visor_3d_pelvis(
                 margin: 0;
                 white-space: pre-line;
             }}
+            #canvas-container {{
+                width: 100%;
+                height: 850px; /* Que coincida con la altura de components.html */
+                position: relative;
+                background-color: #0b1329 !important;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: grab;
+                overflow: hidden;
+            }}
+            #canvas-container:active {{
+                cursor: grabbing;
+            }}
             .canvas-area {{
                 position: relative;
                 width: 100%;
-                height: {altura_canvas}px;
-                min-height: {altura_canvas}px;
+                height: 850px;
                 background-color: #0b1329 !important;
                 display: flex;
                 justify-content: center;
@@ -1335,7 +1410,7 @@ def generar_visor_3d_pelvis(
             #webglCanvas {{
                 position: relative;
                 width: 100%;
-                height: 100%;
+                height: 850px;
                 display: block;
                 background-color: #0b1329 !important;
                 overflow: hidden;
@@ -1533,7 +1608,7 @@ def generar_visor_3d_pelvis(
 
             {subtoolbar_html}
 
-            <div class="canvas-area" id="dropZone">
+            <div class="canvas-area" id="canvas-container">
                 <div id="dragOverlay" class="drag-overlay">📂 Soltar archivo .GLB / .GLTF anatómico aquí</div>
                 <!-- Overlay de vistas de cámara rápida -->
                 <div class="cam-preset-overlay">
@@ -1705,7 +1780,7 @@ def generar_visor_3d_pelvis(
 
             // Variables de escena Three.js
             let scene, camera, renderer, labelRenderer, controls;
-            let container = document.getElementById('webglCanvas');
+            let container = document.getElementById('canvas-container') || document.getElementById('webglCanvas');
             let statusBadge = document.getElementById('status-badge');
             let hudInfo = document.getElementById('hud-info');
             let modelStatus = document.getElementById('model-status');
@@ -1766,8 +1841,12 @@ def generar_visor_3d_pelvis(
             let targetSacrumRotZ = 0.0, currentSacrumRotZ = 0.0;
             let targetSacrumPosZ = 0.0, currentSacrumPosZ = 0.0;
 
+            const DEFAULT_CAM_DISTANCE = 2.3;
+            let neutralCrestY = 0.6212;
+            let neutralEiasY = 0.0655;
+
             // Interpolación de cámara
-            let targetCamPos = new THREE.Vector3(0, 0.05, 3.2);
+            let targetCamPos = new THREE.Vector3(0, 0, DEFAULT_CAM_DISTANCE);
             let targetLookAt = new THREE.Vector3(0, 0, 0);
             let isCameraAnimating = false;
 
@@ -1787,18 +1866,20 @@ def generar_visor_3d_pelvis(
                 }}
 
                 const width = container.clientWidth || 940;
-                const height = container.clientHeight || {altura_canvas};
+                const height = 850;
 
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x0b1329);
 
-                camera = new THREE.PerspectiveCamera(45, width / height, 0.05, 100);
-                camera.position.set(0, 0.05, 3.2);
+                camera = new THREE.PerspectiveCamera(45, (container.clientWidth || 940) / 850, 0.05, 100);
+                camera.position.set(0, 0, DEFAULT_CAM_DISTANCE);
 
                 // Renderer 3D con antialiasing, soporte retina (pixelRatio) y tone mapping cinematográfico
                 renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true, powerPreference: "high-performance" }});
                 renderer.setClearColor(0x0b1329, 1.0);
-                renderer.setSize(width, height);
+                renderer.setSize(container.clientWidth, 850);
+                camera.aspect = container.clientWidth / 850;
+                camera.updateProjectionMatrix();
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.outputEncoding = THREE.sRGBEncoding;
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1808,12 +1889,12 @@ def generar_visor_3d_pelvis(
                 // Renderer 2D de etiquetas anatómicas vectoriales nítidas (CSS2DRenderer)
                 if (typeof THREE.CSS2DRenderer !== 'undefined') {{
                     labelRenderer = new THREE.CSS2DRenderer();
-                    labelRenderer.setSize(width, height);
+                    labelRenderer.setSize(container.clientWidth, 850);
                     labelRenderer.domElement.style.position = 'absolute';
                     labelRenderer.domElement.style.top = '0px';
                     labelRenderer.domElement.style.left = '0px';
                     labelRenderer.domElement.style.width = '100%';
-                    labelRenderer.domElement.style.height = '100%';
+                    labelRenderer.domElement.style.height = '850px';
                     labelRenderer.domElement.style.pointerEvents = 'none';
                     labelRenderer.domElement.style.overflow = 'hidden';
                     container.appendChild(labelRenderer.domElement);
@@ -1824,8 +1905,9 @@ def generar_visor_3d_pelvis(
                 controls.enableDamping = true;
                 controls.dampingFactor = 0.06;
                 controls.screenSpacePanning = true;
-                controls.minDistance = 0.4;
+                controls.minDistance = 0.3;
                 controls.maxDistance = 10.0;
+                controls.target.set(0, 0, 0);
 
                 // Restauración de cámara persistente desde sessionStorage (evita cualquier reset forzado)
                 let cameraRestored = false;
@@ -1836,7 +1918,12 @@ def generar_visor_3d_pelvis(
                     if (savedPos && savedTarget) {{
                         const p = JSON.parse(savedPos);
                         const t = JSON.parse(savedTarget);
-                        if (typeof p.x === 'number' && typeof t.x === 'number') {{
+                        const dist = Math.sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+                        if (dist > 2.8) {{
+                            sessionStorage.removeItem('biopelvis_cam_pos');
+                            sessionStorage.removeItem('biopelvis_cam_target');
+                            sessionStorage.removeItem('biopelvis_cam_zoom');
+                        }} else if (typeof p.x === 'number' && typeof t.x === 'number') {{
                             camera.position.set(p.x, p.y, p.z);
                             controls.target.set(t.x, t.y, t.z);
                             if (savedZoom) camera.zoom = parseFloat(savedZoom);
@@ -1848,7 +1935,7 @@ def generar_visor_3d_pelvis(
                 }} catch(e) {{}}
 
                 if (!cameraRestored) {{
-                    camera.position.set(0, 0.05, 3.2);
+                    camera.position.set(0, 0, DEFAULT_CAM_DISTANCE);
                     controls.target.set(0, 0, 0);
                 }}
 
@@ -1923,12 +2010,11 @@ def generar_visor_3d_pelvis(
             function onWindowResize() {{
                 if (!container || !renderer || !camera) return;
                 const w = container.clientWidth || 940;
-                const h = container.clientHeight || {altura_canvas};
-                camera.aspect = w / h;
+                camera.aspect = w / 850;
                 camera.updateProjectionMatrix();
-                renderer.setSize(w, h);
+                renderer.setSize(w, 850);
                 if (labelRenderer) {{
-                    labelRenderer.setSize(w, h);
+                    labelRenderer.setSize(w, 850);
                 }}
             }}
 
@@ -2088,8 +2174,8 @@ def generar_visor_3d_pelvis(
 
                 // Línea dinámica entre ambas crestas
                 const crestGeom = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0.52, 0.6212, 0),
-                    new THREE.Vector3(-0.52, 0.6212, 0)
+                    new THREE.Vector3(0.52, neutralCrestY, 0),
+                    new THREE.Vector3(-0.52, neutralCrestY, 0)
                 ]);
                 const crestMat = new THREE.LineBasicMaterial({{
                     color: 0xf59e0b,
@@ -2100,10 +2186,10 @@ def generar_visor_3d_pelvis(
                 lineCrests = new THREE.Line(crestGeom, crestMat);
                 refLinesGroup.add(lineCrests);
 
-                // Plano horizontal nivelado neutro para crestas (0.6212)
+                // Plano horizontal nivelado neutro para crestas
                 const refCrestGeom = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(-1.15, 0.6212, 0),
-                    new THREE.Vector3(1.15, 0.6212, 0)
+                    new THREE.Vector3(-1.15, neutralCrestY, 0),
+                    new THREE.Vector3(1.15, neutralCrestY, 0)
                 ]);
                 const refCrestMat = new THREE.LineDashedMaterial({{
                     color: 0x94a3b8,
@@ -2118,8 +2204,8 @@ def generar_visor_3d_pelvis(
 
                 // Línea dinámica entre ambas EIAS
                 const eiasGeom = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0.90, 0.0655, 0.5),
-                    new THREE.Vector3(-0.90, 0.0655, 0.5)
+                    new THREE.Vector3(0.90, neutralEiasY, 0.5),
+                    new THREE.Vector3(-0.90, neutralEiasY, 0.5)
                 ]);
                 const eiasMat = new THREE.LineBasicMaterial({{
                     color: 0x38bdf8,
@@ -2130,10 +2216,10 @@ def generar_visor_3d_pelvis(
                 lineEIAS = new THREE.Line(eiasGeom, eiasMat);
                 refLinesGroup.add(lineEIAS);
 
-                // Plano horizontal nivelado neutro para EIAS (0.0655)
+                // Plano horizontal nivelado neutro para EIAS
                 const refEiasGeom = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(-1.15, 0.0655, 0.5),
-                    new THREE.Vector3(1.15, 0.0655, 0.5)
+                    new THREE.Vector3(-1.15, neutralEiasY, 0.5),
+                    new THREE.Vector3(1.15, neutralEiasY, 0.5)
                 ]);
                 const refEiasMat = new THREE.LineDashedMaterial({{
                     color: 0x94a3b8,
@@ -2148,8 +2234,8 @@ def generar_visor_3d_pelvis(
 
                 // Plomada central vertical perpendicular en X = 0
                 const plumbGeom = new THREE.BufferGeometry().setFromPoints([
-                    new THREE.Vector3(0, 0.75, 0),
-                    new THREE.Vector3(0, -1.05, 0)
+                    new THREE.Vector3(0, 1.0, 0),
+                    new THREE.Vector3(0, -1.0, 0)
                 ]);
                 const plumbMat = new THREE.LineDashedMaterial({{
                     color: 0x64748b,
@@ -2366,6 +2452,9 @@ def generar_visor_3d_pelvis(
 
                 // Anclar hitos anatómicos vinculados solidariamente a los huesos
                 attachLandmarksToBones();
+
+                // Centrado automático tridimensional de la pelvis (THREE.Box3) sobre el origen (0, 0, 0)
+                centerPelvisModel();
             }}
 
             function buildProceduralFallback() {{
@@ -2386,6 +2475,41 @@ def generar_visor_3d_pelvis(
                 pivotDer.add(iliacoDerMesh);
 
                 attachLandmarksToBones();
+                centerPelvisModel();
+            }}
+
+            // 6.1 CENTRADO AUTOMÁTICO BASADO EN BOUNDING BOX (THREE.Box3)
+            function centerPelvisModel() {{
+                if (!sacroMesh && !iliacoIzqMesh && !iliacoDerMesh) return;
+
+                pelvisGroup.updateMatrixWorld(true);
+                const bbox = new THREE.Box3().setFromObject(pelvisGroup);
+                const center = bbox.getCenter(new THREE.Vector3());
+
+                // Desplazar pelvisGroup para que el centro geométrico de la pelvis coincida exactamente con (0, 0, 0)
+                pelvisGroup.position.y += -center.y;
+                pelvisGroup.position.z += -center.z;
+                pelvisGroup.position.x += -center.x + BASE_CALIBRATION_POS_X;
+
+                pelvisGroup.updateMatrixWorld(true);
+
+                // Calibrar las alturas horizontales neutras de Crestas y EIAS
+                if (markerCrestL && markerCrestR) {{
+                    const pL = new THREE.Vector3();
+                    const pR = new THREE.Vector3();
+                    markerCrestL.group.getWorldPosition(pL);
+                    markerCrestR.group.getWorldPosition(pR);
+                    neutralCrestY = (pL.y + pR.y) / 2;
+                }}
+                if (markerEiasL && markerEiasR) {{
+                    const eL = new THREE.Vector3();
+                    const eR = new THREE.Vector3();
+                    markerEiasL.group.getWorldPosition(eL);
+                    markerEiasR.group.getWorldPosition(eR);
+                    neutralEiasY = (eL.y + eR.y) / 2;
+                }}
+
+                setupReferenceLines();
             }}
 
             // 7. CONTROL DE CINEMÁTICA Y LERP DEL ATLAS BIOMECÁNICO
@@ -2794,17 +2918,17 @@ def generar_visor_3d_pelvis(
                 targetLookAt.set(0, 0, 0);
 
                 if (view === 'anterior') {{
-                    targetCamPos.set(0, 0.05, 3.2);
+                    targetCamPos.set(0, 0, DEFAULT_CAM_DISTANCE);
                     camera.up.set(0, 1, 0);
                 }} else if (view === 'posterior') {{
-                    targetCamPos.set(0, 0.05, -3.2);
+                    targetCamPos.set(0, 0, -DEFAULT_CAM_DISTANCE);
                     camera.up.set(0, 1, 0);
                 }} else if (view === 'sagital') {{
-                    const camX = isRight ? -3.2 : 3.2;
-                    targetCamPos.set(camX, 0.05, 0);
+                    const camX = isRight ? -DEFAULT_CAM_DISTANCE : DEFAULT_CAM_DISTANCE;
+                    targetCamPos.set(camX, 0, 0);
                     camera.up.set(0, 1, 0);
                 }} else if (view === 'axial') {{
-                    targetCamPos.set(0, 3.2, 0.01);
+                    targetCamPos.set(0, DEFAULT_CAM_DISTANCE, 0.01);
                     camera.up.set(0, 0, -1);
                 }}
             }}
@@ -2816,13 +2940,15 @@ def generar_visor_3d_pelvis(
                     sessionStorage.removeItem('biopelvis_cam_zoom');
                 }} catch(e) {{}}
                 camera.up.set(0, 1, 0);
+                if (controls) controls.target.set(0, 0, 0);
                 setCameraView('anterior');
             }}
 
             // 9. CARGA DE ARCHIVO EXTERNO (DRAG & DROP / BOTÓN)
             function setupDragAndDrop() {{
-                const zone = document.getElementById('dropZone');
+                const zone = document.getElementById('canvas-container') || document.getElementById('dropZone');
                 const overlay = document.getElementById('dragOverlay');
+                if (!zone || !overlay) return;
 
                 zone.addEventListener('dragover', (e) => {{
                     e.preventDefault();
@@ -2862,18 +2988,6 @@ def generar_visor_3d_pelvis(
                     }});
                 }};
                 reader.readAsArrayBuffer(file);
-            }}
-
-            function onWindowResize() {{
-                const width = container.clientWidth || 940;
-                const height = 440;
-                camera.aspect = width / height;
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                if (labelRenderer) {{
-                    labelRenderer.setSize(width, height);
-                }}
             }}
 
             // 10. BUCLE DE RENDERIZADO Y ACTUALIZACIÓN DINÁMICA
@@ -2934,11 +3048,11 @@ def generar_visor_3d_pelvis(
 
                         lineCrests.geometry.setFromPoints([posCL, posCR]);
 
-                        // Plano horizontal neutro FIJO en el nivel calibrado (0.6212)
+                        // Plano horizontal neutro FIJO en el nivel calibrado
                         const avgZ_c = (posCL.z + posCR.z) / 2;
                         refLineCrests.geometry.setFromPoints([
-                            new THREE.Vector3(-1.15, 0.6212, avgZ_c),
-                            new THREE.Vector3(1.15, 0.6212, avgZ_c)
+                            new THREE.Vector3(-1.15, neutralCrestY, avgZ_c),
+                            new THREE.Vector3(1.15, neutralCrestY, avgZ_c)
                         ]);
                         refLineCrests.computeLineDistances();
 
@@ -2959,11 +3073,11 @@ def generar_visor_3d_pelvis(
 
                         lineEIAS.geometry.setFromPoints([posEL, posER]);
 
-                        // Plano horizontal neutro FIJO en el nivel calibrado (0.0655)
+                        // Plano horizontal neutro FIJO en el nivel calibrado
                         const avgZ_e = (posEL.z + posER.z) / 2;
                         refLineEIAS.geometry.setFromPoints([
-                            new THREE.Vector3(-1.15, 0.0655, avgZ_e),
-                            new THREE.Vector3(1.15, 0.0655, avgZ_e)
+                            new THREE.Vector3(-1.15, neutralEiasY, avgZ_e),
+                            new THREE.Vector3(1.15, neutralEiasY, avgZ_e)
                         ]);
                         refLineEIAS.computeLineDistances();
 
@@ -4272,9 +4386,9 @@ with tab_visualizador:
                 palpacion=palpacion_inst,
                 diagnostico=diagnostico_actual,
                 es_modo_atlas=False,
-                altura_canvas=500
+                altura_canvas=850
             )
-            components.html(sim_html, height=580, scrolling=False)
+            components.html(sim_html, height=850, scrolling=False)
 
     elif "Módulo B" in sel_modulo_vis:
         col_view_info, col_view_canvas = st.columns([1, 2.5])
@@ -4316,18 +4430,236 @@ with tab_visualizador:
     else:
         # Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D
         st.markdown("#### 📚 Atlas Biomecánico Interactivo y Galería de Disfunciones 3D")
-        st.caption("Estación clínica 3D interactiva en tiempo real. Seleccione categoría, disfunción específica y hemipelvis directamente en los controles de la barra superior del visor. Persistencia orbital 360° continua, interpolación cinemática fluida (lerp) y ficha didáctica integrada sin recargas ni parpadeos.")
+        st.caption("Estación clínica 3D interactiva en tiempo real. Seleccione categoría, disfunción específica y hemipelvis afectada. La pelvis 3D y la ficha didáctica inferior se actualizarán instantáneamente con los parámetros anatomo-patológicos y vectores de ajuste.")
 
+        # 1. SELECTOR DEL MÓDULO C
+        st.markdown("##### 🎛️ Selectores Biomecánicos de Simulación:")
+        col_cat, col_disf, col_lado = st.columns([1.6, 2.2, 1.2])
+
+        CATEGORIAS_ATLAS = {
+            "Disfunciones Sagitales (Rotacionales)": [
+                ("pi", "Ilíaco Posterior (PI / Retroversión)"),
+                ("as", "Ilíaco Anterior (AS / Anteversión)"),
+            ],
+            "Disfunciones Verticales (Cizallamientos / Slips)": [
+                ("up", "Ilíaco Ascendido (Upslip Craneal)"),
+                ("down", "Ilíaco Descendido (Downslip Caudal)"),
+            ],
+            "Disfunciones Transversales (Flares)": [
+                ("outflare", "Outflare (Rotación Externa / EX)"),
+                ("inflare", "Inflare (Rotación Interna / IN)"),
+            ],
+            "Disfunciones Sacroilíacas (Torsiones Sacras)": [
+                ("torsion_ant", "Torsión Sacra Anterior (R/R o L/L)"),
+                ("torsion_post", "Torsión Sacra Posterior (R/L o L/R)"),
+            ]
+        }
+
+        with col_cat:
+            cat_seleccionada = st.selectbox(
+                "📂 Categoría:",
+                options=list(CATEGORIAS_ATLAS.keys()),
+                index=0,
+                key="modulo_c_cat_sel"
+            )
+
+        opciones_disf = CATEGORIAS_ATLAS[cat_seleccionada]
+        nombres_disf = [opt[1] for opt in opciones_disf]
+
+        with col_disf:
+            disf_nombre_sel = st.selectbox(
+                "🎯 Disfunción Específica:",
+                options=nombres_disf,
+                index=0,
+                key="modulo_c_disf_sel"
+            )
+
+        preset_actual = next(opt[0] for opt in opciones_disf if opt[1] == disf_nombre_sel)
+
+        with col_lado:
+            lado_actual = st.radio(
+                "🦵 Hemipelvis Afectada:",
+                options=["Derecho", "Izquierdo"],
+                index=0,
+                horizontal=True,
+                key="modulo_c_lado_sel"
+            )
+
+        # 2. VISOR 3D ANATÓMICO (Sin paneles superpuestos, 100% visibilidad pélvica)
         atlas_html = generar_visor_3d_pelvis(
             palpacion=palpacion_inst,
             diagnostico=diagnostico_actual,
-            preset_inicial="pi",
-            lado_inicial="Derecho",
-            mostrar_ficha_didactica=True,
+            preset_inicial=preset_actual,
+            lado_inicial=lado_actual,
+            mostrar_ficha_didactica=False,
             es_modo_atlas=True,
-            altura_canvas=740
+            altura_canvas=850
         )
-        components.html(atlas_html, height=820, scrolling=False)
+        components.html(atlas_html, height=850, scrolling=False)
+
+        # 3. FICHA BIOMECÁNICA Y DIDÁCTICA REUBICADA FUERA DEL CANVAS 3D
+        ck_key = PRESET_TO_CK_KEY[preset_actual]
+        info_clinica = get_disfuncion_info(ck_key)
+        meta_preset = ATLAS_PRESET_METADATA.get(preset_actual, {})
+        crit = info_clinica.get("criterios_diagnosticos", {})
+        ajuste = info_clinica.get("ajuste_articular", {})
+        met = info_clinica.get("tecnica_met", {})
+        miofascial = info_clinica.get("abordaje_miofascial", {})
+
+        # Banner informativo de la ficha
+        st.markdown(f"""
+        <div class="clinical-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left: 5px solid #0284c7; padding: 18px 24px; margin-top: 18px; margin-bottom: 20px; color: #f8fafc; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                <div>
+                    <span class="badge" style="background:#0284c7; color:#fff; font-weight:700; font-size:0.75rem; letter-spacing:0.05em; padding:3px 10px; border-radius:999px;">📋 FICHA BIOMECÁNICA DIDÁCTICA</span>
+                    <h3 style="margin:6px 0 2px 0; color:#38bdf8; font-size:1.4rem; font-weight:700;">{info_clinica.get('nombre_clinico', disf_nombre_sel)} — Hemipelvis {lado_actual}</h3>
+                    <div style="color:#94a3b8; font-size:0.86rem; margin-top:3px;">
+                        <strong>🏷️ Listings:</strong> {meta_preset.get('listing', 'N/D')}
+                    </div>
+                </div>
+                <div style="background:rgba(2, 132, 199, 0.15); border:1px solid rgba(56, 189, 248, 0.4); border-radius:8px; padding:10px 16px; text-align:right;">
+                    <div style="font-size:0.72rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">Eje Articular / Clasificación</div>
+                    <div style="font-size:0.95rem; font-weight:700; color:#38bdf8;">{info_clinica.get('eje_movimiento', 'Sacroilíaco')}</div>
+                    <div style="font-size:0.8rem; color:#cbd5e1;">{info_clinica.get('categoria', cat_seleccionada)}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # 4 Columnas informativas organizadas
+        col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+
+        with col_c1:
+            st.markdown(f"""
+            <div class="clinical-card" style="height:100%; border-top: 3px solid #38bdf8;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">PALPACIÓN CLÍNICA</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">📍 Reparos Anatómicos</div>
+                <ul style="padding-left:16px; font-size:0.83rem; color:#334155; line-height:1.6; margin:0;">
+                    <li><strong>EIAS:</strong> {crit.get('eias', 'N/A')}</li>
+                    <li><strong>EIPS:</strong> {crit.get('eips', 'N/A')}</li>
+                    <li><strong>Cresta Ilíaca:</strong> {crit.get('cresta', 'N/A')}</li>
+                    <li><strong>Tub. Isquiática:</strong> {crit.get('isquion', 'N/A')}</li>
+                    <li><strong>Sínfisis Púbica:</strong> {crit.get('sinfisis', 'N/A')}</li>
+                    <li><strong>Surco Sacro / AIL:</strong> {crit.get('surco_sacro', 'Simétrico')} / {crit.get('ail', 'Simétrico')}</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_c2:
+            st.markdown(f"""
+            <div class="clinical-card" style="height:100%; border-top: 3px solid #f59e0b;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">DINÁMICA ARTICULAR</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">💥 Cinemática & Causa</div>
+                <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                    <div style="margin-bottom:8px;">
+                        <strong>Eje de Movimiento:</strong><br>
+                        <span style="color:#0284c7; font-weight:600;">{info_clinica.get('eje_movimiento', 'Articulación SI')}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Cinemática Articular:</strong><br>
+                        <span>{meta_preset.get('cinematica_resumen', 'Movimiento tridimensional acoplado.')}</span>
+                    </div>
+                    <div>
+                        <strong>Mecanismo Lesional:</strong><br>
+                        <span style="color:#475569;">{meta_preset.get('mecanismo', 'Sobrecarga biomecánica o traumatismo.')}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_c3:
+            inhibir_str = ", ".join(miofascial.get("inhibir", [])) if miofascial.get("inhibir") else "Evaluación específica"
+            activar_str = ", ".join(miofascial.get("activar", [])) if miofascial.get("activar") else "Estabilizadores pélvicos"
+            alerta_str = miofascial.get("precaucion_reactiva", "Monitorear tono muscular.")
+            st.markdown(f"""
+            <div class="clinical-card" style="height:100%; border-top: 3px solid #ec4899;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">ESTADO TISULAR</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">🧬 Tensión Ligamentosa</div>
+                <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                    <div style="margin-bottom:8px;">
+                        <strong>Tensión Ligamentosa:</strong><br>
+                        <span style="color:#be185d; font-weight:600;">{crit.get('tejidos_blandos', 'Normal')}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Músculos a Inhibir / Liberar:</strong><br>
+                        <span style="color:#475569;">{inhibir_str}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Alerta Reactiva:</strong><br>
+                        <span style="color:#b45309; font-size:0.8rem;">{alerta_str}</span>
+                    </div>
+                    <div>
+                        <strong>Activar / Fortalecer:</strong><br>
+                        <span style="color:#047857; font-weight:600;">{activar_str}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_c4:
+            st.markdown(f"""
+            <div class="clinical-card" style="height:100%; border-top: 3px solid #10b981;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">EVALUACIÓN FUNCIONAL</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">⚡ Pruebas Funcionales</div>
+                <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                    <div style="margin-bottom:8px;">
+                        <strong>Long-Sitting Test:</strong><br>
+                        <span style="color:#047857; font-weight:600;">{crit.get('long_sitting', 'Neutro')}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Maléolo en Supino:</strong><br>
+                        <span>{crit.get('maleolo_supino', 'Simétrico')}</span>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Supino vs Prono:</strong><br>
+                        <span>{crit.get('pierna_supino_prono', 'Sin alteración relativa')}</span>
+                    </div>
+                    <div>
+                        <strong>Spring Test Sacro:</strong><br>
+                        <span style="font-weight:600;">{crit.get('spring_test', 'Negativo')}</span>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # 2 Columnas para Protocolo de Tratamiento & Corrección Manual
+        st.markdown("##### 🎯 Protocolo de Tratamiento & Corrección Manual:")
+        col_adj1, col_adj2 = st.columns(2)
+
+        with col_adj1:
+            st.markdown(f"""
+            <div class="clinical-card" style="border-left:4px solid #0284c7;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">MANIPULACIÓN ARTICULAR</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🔨 Ajuste HVLA: {ajuste.get('tecnica', 'Side-Posture')}</div>
+                <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
+                <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
+                    <p style="margin-bottom:6px;"><strong>Posición del Paciente:</strong> {ajuste.get('posicion_paciente', 'Decúbito lateral')}</p>
+                    <p style="margin-bottom:6px;"><strong>PCP (Punto de Contacto Paciente):</strong> <span style="color:#0284c7; font-weight:600;">{ajuste.get('pcp', 'EIPS')}</span></p>
+                    <p style="margin-bottom:6px;"><strong>PCC (Punto de Contacto Clínico):</strong> {ajuste.get('pcc', 'Pisiforme / Hipotenar')}</p>
+                    <p style="margin-bottom:6px;"><strong>LOD (Línea de Conducción / Vector):</strong> <span style="color:#047857; font-weight:600;">{ajuste.get('linea_correccion', 'P-A')}</span></p>
+                    <p style="margin-bottom:0; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:0.8rem;">
+                        <strong>⚠️ Precaución Técnica:</strong> {ajuste.get('advertencia', 'Respetar barrera motriz sin rebote.')}
+                    </p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_adj2:
+            st.markdown(f"""
+            <div class="clinical-card" style="border-left:4px solid #10b981;">
+                <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">REEDUCACIÓN NEUROMUSCULAR</div>
+                <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🧘 Técnica MET: {met.get('nombre', 'MET de Fred Mitchell Sr.')}</div>
+                <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
+                <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
+                    <p style="margin-bottom:6px;"><strong>Posición:</strong> {met.get('posicion', 'Decúbito supino/prono')}</p>
+                    <p style="margin-bottom:6px;"><strong>Músculo Motor Clave:</strong> <span style="color:#047857; font-weight:600;">{met.get('musculo_motor', 'Flexores/Extensores')}</span></p>
+                    <p style="margin-bottom:6px;"><strong>Acción Isométrica:</strong> {met.get('accion', 'Contracción resistida al 20-25% por 7-10s.')}</p>
+                    <p style="margin-bottom:0; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; padding:6px 10px; color:#065f46; font-size:0.8rem;">
+                        <strong>Fase Post-Isométrica (Relajación):</strong> {met.get('fase_post', 'Ganancia pasiva hacia nueva barrera motriz.')}
+                    </p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         # Matriz Comparativa General de Consulta Rápida
         st.markdown("---")
