@@ -4492,6 +4492,65 @@ tab_anamnesis, tab_exploracion, tab_visualizador, tab_juicio = st.tabs([
     "4. ⚖️ Juicio Clínico y Exportación"
 ])
 
+# Sincronización de pestañas principales con la URL (tab y modulo)
+target_tab_idx = 0
+param_tab = str(st.query_params.get("tab", "")).strip().lower()
+param_modulo = str(st.query_params.get("modulo", "")).strip().lower()
+
+if param_modulo in ("a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
+    target_tab_idx = 2  # Pestaña 3: Visualizador y Cinemática
+elif param_tab in ("1", "anamnesis"):
+    target_tab_idx = 0
+elif param_tab in ("2", "exploracion", "palpacion"):
+    target_tab_idx = 1
+elif param_tab in ("3", "visualizador", "cinematica"):
+    target_tab_idx = 2
+elif param_tab in ("4", "juicio", "prescripcion", "exportacion"):
+    target_tab_idx = 3
+else:
+    target_tab_idx = 0
+
+components.html(
+    f"""
+    <script>
+    (function() {{
+        const targetIdx = {target_tab_idx};
+        function setupTabs() {{
+            try {{
+                const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
+                if (tabs && tabs.length >= 4) {{
+                    if (targetIdx >= 0 && targetIdx < tabs.length) {{
+                        const tabBtn = tabs[targetIdx];
+                        if (tabBtn && tabBtn.getAttribute('aria-selected') !== 'true') {{
+                            tabBtn.click();
+                        }}
+                    }}
+                    tabs.forEach((btn, idx) => {{
+                        if (!btn.dataset.tabSyncAttached) {{
+                            btn.dataset.tabSyncAttached = "true";
+                            btn.addEventListener('click', function() {{
+                                const u = new URL(window.parent.location.href);
+                                u.searchParams.set("tab", (idx + 1).toString());
+                                if (idx !== 2) {{
+                                    u.searchParams.delete("modulo");
+                                }}
+                                window.parent.history.replaceState({{}}, "", u.toString());
+                            }});
+                        }}
+                    }});
+                }}
+            }} catch(e) {{}}
+        }}
+        setTimeout(setupTabs, 60);
+        setTimeout(setupTabs, 200);
+        setTimeout(setupTabs, 500);
+    }})();
+    </script>
+    """,
+    height=0,
+    width=0,
+)
+
 
 # ------------------------------------------------------------------------------
 # TAB 1: ANAMNESIS Y CRITERIOS DE EXCLUSIÓN (RED FLAGS)
@@ -4782,16 +4841,56 @@ with tab_visualizador:
     st.markdown("### 🦴 Representación Visual Pélvica Interactiva y Vectorial")
     st.caption("Simulador anatómico dinámico pre-ajuste y cálculo vectorial de alta visibilidad para el protocolo quiropráctico post-evaluación.")
 
+    OPCIONES_MODULO_VIS = [
+        "🟢 Módulo A: Visor 3D Anatómico Interactivo 360° (Pre-Ajuste)",
+        "🔵 Módulo B: Diagrama Vectorial de Ajuste y Puntos de Contacto (Post-Evaluación)",
+        "🟣 Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D"
+    ]
+    MODULO_KEY_TO_IDX = {
+        "a": 0,
+        "modulo_a": 0,
+        "b": 1,
+        "modulo_b": 1,
+        "c": 2,
+        "modulo_c": 2,
+    }
+
+    # Leer parámetro de la URL para definir el índice inicial (F5 o navegación directa)
+    raw_modulo = str(st.query_params.get("modulo", "")).strip().lower()
+    modulo_idx_init = MODULO_KEY_TO_IDX.get(raw_modulo, 0)
+
+    # Sincronizar clave en session_state si la URL lo especifica y la clave aún no está fijada o difiere
+    if "selector_modulo_cinematica" not in st.session_state:
+        st.session_state["selector_modulo_cinematica"] = OPCIONES_MODULO_VIS[modulo_idx_init]
+    elif raw_modulo in MODULO_KEY_TO_IDX and st.session_state.get("selector_modulo_cinematica") != OPCIONES_MODULO_VIS[modulo_idx_init]:
+        st.session_state["selector_modulo_cinematica"] = OPCIONES_MODULO_VIS[modulo_idx_init]
+
+    def _sync_modulo_query_param():
+        sel = st.session_state.get("selector_modulo_cinematica", "")
+        if "Módulo A" in sel:
+            st.query_params["modulo"] = "a"
+        elif "Módulo B" in sel:
+            st.query_params["modulo"] = "b"
+        elif "Módulo C" in sel:
+            st.query_params["modulo"] = "c"
+        st.query_params["tab"] = "3"
+
     sel_modulo_vis = st.radio(
         "Perspectiva de Visualización Biomecánica:",
-        options=[
-            "🟢 Módulo A: Visor 3D Anatómico Interactivo 360° (Pre-Ajuste)",
-            "🔵 Módulo B: Diagrama Vectorial de Ajuste y Puntos de Contacto (Post-Evaluación)",
-            "🟣 Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D"
-        ],
+        options=OPCIONES_MODULO_VIS,
+        index=modulo_idx_init,
         horizontal=True,
-        key="selector_modulo_cinematica"
+        key="selector_modulo_cinematica",
+        on_change=_sync_modulo_query_param
     )
+
+    # Sincronización inmediata con query_params
+    if "Módulo A" in sel_modulo_vis and st.query_params.get("modulo") != "a":
+        st.query_params["modulo"] = "a"
+    elif "Módulo B" in sel_modulo_vis and st.query_params.get("modulo") != "b":
+        st.query_params["modulo"] = "b"
+    elif "Módulo C" in sel_modulo_vis and st.query_params.get("modulo") != "c":
+        st.query_params["modulo"] = "c"
 
     if "Módulo A" in sel_modulo_vis:
         col_view_info, col_view_canvas = st.columns([1, 2.5])
