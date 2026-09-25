@@ -20,7 +20,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-from auth import render_auth_screen
+from auth import render_auth_screen, render_user_badge, cerrar_sesion
 
 if not render_auth_screen():
     st.stop()
@@ -4455,25 +4455,30 @@ def generar_reporte_pdf(
 # ENCABEZADO Y HEADER CLÍNICO DE STREAMLIT
 # ==============================================================================
 
-st.markdown("""
-<div class="clinical-header">
-    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-        <div>
-            <h1 style="margin:0; font-size:1.8rem; font-weight:700; letter-spacing:-0.02em;">
-                ⚖️ BioPelvis Pro | Suite de Diagnóstico Sacroilíaco y Pelviano
-            </h1>
-            <p style="margin:4px 0 0 0; color:#94a3b8; font-size:0.95rem;">
-                Inferencia Biomecánica Sagital y Vertical (Downslip/Upslip), Gonstead PI, Clúster de Laslett y Reportes Clínicos en PDF
-            </p>
-        </div>
-        <div>
-            <span class="badge badge-info" style="font-size:0.8rem; padding:6px 14px;">
-                v2.2 • PDF MÉDICO
-            </span>
+col_hdr_main, col_hdr_user = st.columns([3.3, 1.7])
+with col_hdr_main:
+    st.markdown("""
+    <div class="clinical-header" style="margin-bottom:12px; padding:18px 24px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+            <div>
+                <h1 style="margin:0; font-size:1.65rem; font-weight:700; letter-spacing:-0.02em;">
+                    ⚖️ BioPelvis Pro | Suite de Diagnóstico Sacroilíaco y Pelviano
+                </h1>
+                <p style="margin:4px 0 0 0; color:#94a3b8; font-size:0.90rem;">
+                    Inferencia Biomecánica Sagital y Vertical (Downslip/Upslip), Gonstead PI, Clúster de Laslett y Reportes Clínicos en PDF
+                </p>
+            </div>
+            <div>
+                <span class="badge badge-info" style="font-size:0.75rem; padding:5px 12px;">
+                    v2.2 • PDF MÉDICO
+                </span>
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+with col_hdr_user:
+    st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+    render_user_badge()
 
 
 # ==============================================================================
