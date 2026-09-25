@@ -4490,7 +4490,7 @@ if "paciente_inst" not in st.session_state:
         sexo="Masculino",
         lateralidad="Diestro",
         ocupacion_deporte="Trabajo de oficina (sedente 8h) / Corredor aficionado",
-        tiempo_evolucion=TiempoEvolucion.SUBAGUDA,
+        tiempo_evolucion=TiempoEvolucion.SUBAGUDO,
         mecanismo_inicio=MecanismoInicio.INSIDIOSO
     )
 
@@ -4520,7 +4520,7 @@ if "palpacion_inst" not in st.session_state:
         eips=HitoOseoPosicion.BAJA,
         escalon_pubis=EscalonPubico.NEUTRO,
         maleolo_supino=MaleoloSupino.CORTO,
-        long_sitting=LongSittingTest.CORTO_SE_ALARGA,
+        long_sitting=LongSittingTest.CORTO_A_LARGO,
         surco_sacro=SurcoSacro.NEUTRO,
         ail=AnguloInferolateral.SIMETRICO,
         piramidal=EstadoTejidoBlando.NORMOTONICO,
