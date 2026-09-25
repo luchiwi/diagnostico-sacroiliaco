@@ -2,6 +2,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
 import os
 from typing import Dict, List, Optional, Tuple
 from PIL import Image
@@ -1140,11 +1141,32 @@ PRESET_TO_CK_KEY = {
     "sacro_flexion": "SACRO_FLEXION",
     "sacro_extension": "SACRO_EXTENSION",
     "sacro_ai_d": "SACRO_ANTERO_INFERIOR_D",
+    "sacro_ai_i": "SACRO_ANTERO_INFERIOR_I",
+    "sacro_ps_d": "SACRO_POSTERO_SUPERIOR_D",
     "sacro_ps_i": "SACRO_POSTERO_SUPERIOR_I",
     "sacro_flex_uni": "SACRO_FLEXION_UNILATERAL",
     "sacro_ext_uni": "SACRO_EXTENSION_UNILATERAL",
     "pubis_up": "ILIACO_UPSLIP",
     "pubis_down": "ILIACO_DOWNSLIP",
+}
+
+CK_KEY_TO_PRESET = {
+    "ILIACO_POSTERIOR": "pi",
+    "ILIACO_ANTERIOR": "as",
+    "ILIACO_UPSLIP": "up",
+    "ILIACO_DOWNSLIP": "down",
+    "ILIACO_OUTFLARE": "outflare",
+    "ILIACO_INFLARE": "inflare",
+    "TORSION_SACRA_ANTERIOR": "torsion_ant",
+    "TORSION_SACRA_POSTERIOR": "torsion_post",
+    "SACRO_FLEXION": "sacro_flexion",
+    "SACRO_EXTENSION": "sacro_extension",
+    "SACRO_ANTERO_INFERIOR_D": "sacro_ai_d",
+    "SACRO_ANTERO_INFERIOR_I": "sacro_ai_i",
+    "SACRO_POSTERO_SUPERIOR_D": "sacro_ps_d",
+    "SACRO_POSTERO_SUPERIOR_I": "sacro_ps_i",
+    "SACRO_FLEXION_UNILATERAL": "sacro_flex_uni",
+    "SACRO_EXTENSION_UNILATERAL": "sacro_ext_uni",
 }
 
 ATLAS_PRESET_METADATA = {
@@ -1203,6 +1225,16 @@ ATLAS_PRESET_METADATA = {
         "mecanismo": "Microtrauma repetitivo en rotación pélvica con carga asimétrica, espasmo protector del músculo piramidal derecho.",
         "cinematica_resumen": "La hemibase sacra derecha se desplaza en nutación hacia antero-inferior, el ILA izquierdo se hace prominente/superficial hacia posterior, piramidal tenso ipsilateral y falsa pierna larga derecha.",
     },
+    "sacro_ai_i": {
+        "listing": "Osteopatía: Sacro Anterior Izquierdo (Antero-Inferior I)",
+        "mecanismo": "Microtrauma repetitivo en rotación pélvica izquierda con carga asimétrica, hipertonía del piramidal izquierdo.",
+        "cinematica_resumen": "La hemibase sacra izquierda se profundiza en nutación hacia antero-inferior, el ILA derecho se hace prominente/superficial hacia posterior, piramidal tenso ipsilateral y falsa pierna larga izquierda.",
+    },
+    "sacro_ps_d": {
+        "listing": "Osteopatía: Sacro Posterior Derecho (Postero-Superior D)",
+        "mecanismo": "Impacto axial asimétrico en flexión o atrapamiento articular en contranutación unilateral derecha.",
+        "cinematica_resumen": "La hemibase sacra derecha se fija en contranutación postero-superior quedando superficial y dolorosa en el sulcus; el ILA izquierdo se profundiza. Maléolo alto homolateral y Spring test rígido sobre base derecha.",
+    },
     "sacro_ps_i": {
         "listing": "Osteopatía: Sacro Postero-Superior Izquierdo",
         "mecanismo": "Impacto axial asimétrico en flexión o atrapamiento articular en contranutación unilateral izquierda.",
@@ -1229,6 +1261,90 @@ ATLAS_PRESET_METADATA = {
         "cinematica_resumen": "Escalón inferior en sínfisis púbica con descenso de la rama púbica homolateral y severo espasmo de aductores.",
     },
 }
+
+
+def _generar_payload_clinico_json(diagnostico: Optional[DiagnosticoBiomecanico] = None) -> str:
+    """Genera el catálogo de conocimiento clínico biomecánico serializado en JSON para Three.js."""
+    payload: Dict[str, Any] = {}
+    for preset_k, ck_k in PRESET_TO_CK_KEY.items():
+        info = get_disfuncion_info(ck_k)
+        meta = ATLAS_PRESET_METADATA.get(preset_k, {})
+        payload[preset_k] = {
+            "nombre_clinico": info.get("nombre_clinico", preset_k),
+            "categoria": info.get("categoria", "Disfunción Pélvica"),
+            "eje_movimiento": info.get("eje_movimiento", "Sacroilíaco"),
+            "listing": meta.get("listing", "N/D"),
+            "mecanismo": meta.get("mecanismo", "Sobrecarga biomecánica o traumatismo."),
+            "cinematica_resumen": meta.get("cinematica_resumen", "Movimiento tridimensional acoplado."),
+            "crit": info.get("criterios_diagnosticos", {}),
+            "miofascial": info.get("abordaje_miofascial", {}),
+            "ajuste": info.get("ajuste_articular", {}),
+            "met": info.get("tecnica_met", {}),
+        }
+
+    # Estado Neutro Fisiológico
+    payload["neutral"] = {
+        "nombre_clinico": "Estado Anatómico Neutro Fisiológico",
+        "categoria": "Control Normal / Sin Disfunción",
+        "eje_movimiento": "Ejes Fisiológicos Libres",
+        "listing": "Alineación basal simétrica en los 3 planos del espacio",
+        "mecanismo": "Equilibrio biomecánico estático y dinámico sin restricción articular ni dolor.",
+        "cinematica_resumen": "Movilidad simétrica preservada en flexión, extensión, rotación y traslación.",
+        "crit": {
+            "eias": "Nivelada simétrica bilateral",
+            "eips": "Nivelada simétrica bilateral",
+            "cresta": "Horizontal nivelada",
+            "isquion": "Nivelado simétrico",
+            "sinfisis": "Sin escalón / Alineada",
+            "surco_sacro": "Neutro / Simétrico",
+            "ail": "Simétrico bilateral",
+            "maleolo_supino": "Simétrico bilateral",
+            "long_sitting": "Sin discrepancia funcional",
+            "pierna_supino_prono": "Longitudes simétricas",
+            "spring_test": "Elástico normal (Spring +)",
+            "tejidos_blandos": "Tono y viscoelasticidad fisiológicos",
+        },
+        "miofascial": {
+            "inhibir": ["No requiere inhibición activa"],
+            "precaucion_reactiva": "Monitoreo preventivo del control motor lumbo-pélvico.",
+            "activar": ["Core lumbo-pélvico y marcha funcional"],
+        },
+        "ajuste": {
+            "tecnica": "No indicada (sin disfunción fija)",
+            "posicion_paciente": "N/A",
+            "pcp": "N/A",
+            "pcc": "N/A",
+            "linea_correccion": "N/A",
+            "advertencia": "No aplicar maniobras de alta velocidad sin disfunción confirmada.",
+        },
+        "met": {
+            "nombre": "Educación postural y control motor",
+            "posicion": "Sedestación / Bipedestación ergonómica",
+            "musculo_motor": "Estabilizadores lumbo-pélvicos profundos",
+            "accion": "Co-contracción submáxima de transverso y multífidos",
+            "fase_post": "Integración funcional en patrones de marcha",
+        },
+    }
+
+    if diagnostico:
+        ck_diag = diagnostico.clave_conocimiento or "SACRO_FLEXION"
+        info_diag = get_disfuncion_info(ck_diag)
+        preset_mapped = CK_KEY_TO_PRESET.get(ck_diag, "pi")
+        meta_diag = ATLAS_PRESET_METADATA.get(preset_mapped, {})
+        payload["dysfunction"] = {
+            "nombre_clinico": diagnostico.titulo or info_diag.get("nombre_clinico", "Disfunción del Paciente"),
+            "categoria": diagnostico.clasificacion_tipo or info_diag.get("categoria", "Disfunción Pélvica"),
+            "eje_movimiento": info_diag.get("eje_movimiento", "Sacroilíaco"),
+            "listing": meta_diag.get("listing", "Caso Clínico Evaluado"),
+            "mecanismo": meta_diag.get("mecanismo", "Sobrecarga biomecánica del paciente."),
+            "cinematica_resumen": meta_diag.get("cinematica_resumen", "Movimiento tridimensional alterado."),
+            "crit": info_diag.get("criterios_diagnosticos", {}),
+            "miofascial": info_diag.get("abordaje_miofascial", {}),
+            "ajuste": info_diag.get("ajuste_articular", {}),
+            "met": info_diag.get("tecnica_met", {}),
+        }
+
+    return json.dumps(payload, ensure_ascii=False)
 
 
 def generar_visor_3d_pelvis(
@@ -1297,6 +1413,7 @@ def generar_visor_3d_pelvis(
 
     preset_init = preset_inicial or ("dysfunction" if diagnostico is not None else "pi")
     glb_b64 = _obtener_glb_pelvis_base64()
+    json_payload = _generar_payload_clinico_json(diagnostico)
 
     if es_modo_atlas:
         bar_title_html = "<span>🦴 ATLAS Y VISOR 3D BIOMECÁNICO</span>"
@@ -1396,9 +1513,143 @@ def generar_visor_3d_pelvis(
                         </div>
                     </div>
                 </div>"""
+            didactic_full_sheet_html = """
+                <!-- Ficha Biomecánica Didáctica Completa Dinámica -->
+                <div id="didacticFullSheet" class="didactic-full-sheet">
+                    <div class="dfs-banner">
+                        <div>
+                            <span class="dfs-badge">📋 FICHA BIOMECÁNICA DIDÁCTICA</span>
+                            <h3 id="dfs-title" class="dfs-title">Ilíaco Posterior (PI) — Hemipelvis Derecha</h3>
+                            <div class="dfs-subtitle">
+                                <strong>🏷️ Listings:</strong> <span id="dfs-listing">Gonstead: PI | Mitchell: Rotación Posterior | Osteopatía: Retroversión coxal</span>
+                            </div>
+                        </div>
+                        <div class="dfs-tag-box">
+                            <div style="font-size:10px; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">Eje Articular / Clasificación</div>
+                            <div id="dfs-eje" style="font-size:13px; font-weight:700; color:#38bdf8;">Eje Transverso S3</div>
+                            <div id="dfs-cat" style="font-size:11px; color:#cbd5e1;">Disfunción Iliosacra Rotacional Sagital</div>
+                        </div>
+                    </div>
+
+                    <div class="dfs-grid-4">
+                        <div class="dfs-card" style="border-top: 3px solid #38bdf8;">
+                            <div class="dfs-card-header">PALPACIÓN CLÍNICA</div>
+                            <div class="dfs-card-title">📍 Reparos Anatómicos</div>
+                            <div class="dfs-card-body">
+                                <ul>
+                                    <li><strong>EIAS:</strong> <span id="dfs-eias">Alta y lateralizada</span></li>
+                                    <li><strong>EIPS:</strong> <span id="dfs-eips">Baja y medializada</span></li>
+                                    <li><strong>Cresta Ilíaca:</strong> <span id="dfs-cresta">Baja</span></li>
+                                    <li><strong>Tub. Isquiática:</strong> <span id="dfs-isquion">Bajo y anterior</span></li>
+                                    <li><strong>Sínfisis Púbica:</strong> <span id="dfs-sinfisis">Antero-superior (alta y anterior)</span></li>
+                                    <li><strong>Surco Sacro / AIL:</strong> <span id="dfs-surco-ail">Neutro / Simétrico</span></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="dfs-card" style="border-top: 3px solid #f59e0b;">
+                            <div class="dfs-card-header">DINÁMICA ARTICULAR</div>
+                            <div class="dfs-card-title">💥 Cinemática & Causa</div>
+                            <div class="dfs-card-body">
+                                <div style="margin-bottom:8px;">
+                                    <strong>Eje de Movimiento:</strong><br>
+                                    <span id="dfs-eje-mov" style="color:#38bdf8; font-weight:600;">Eje Transverso S3</span>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <strong>Cinemática Articular:</strong><br>
+                                    <span id="dfs-cinematica">Retroversión pura del coxal sobre la carilla auricular sacra S3.</span>
+                                </div>
+                                <div>
+                                    <strong>Mecanismo Lesional:</strong><br>
+                                    <span id="dfs-mecanismo" style="color:#94a3b8;">Caída sentada sobre isquion o frenada brusca con rodilla en extensión.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dfs-card" style="border-top: 3px solid #ec4899;">
+                            <div class="dfs-card-header">ESTADO TISULAR</div>
+                            <div class="dfs-card-title">🧬 Tensión Ligamentosa</div>
+                            <div class="dfs-card-body">
+                                <div style="margin-bottom:8px;">
+                                    <strong>Tensión Ligamentosa:</strong><br>
+                                    <span id="dfs-tejidos" style="color:#f472b6; font-weight:600;">Tensión aumentada en ligamento sacrotuberoso</span>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <strong>Músculos a Inhibir / Liberar:</strong><br>
+                                    <span id="dfs-inhibir" style="color:#cbd5e1;">Isquiotibiales proximales, Lig. sacrotuberoso</span>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <strong>Alerta Reactiva:</strong><br>
+                                    <span id="dfs-alerta" style="color:#fbbf24; font-size:11px;">Músculo Piramidal bajo tensión excéntrica reactiva</span>
+                                </div>
+                                <div>
+                                    <strong>Activar / Fortalecer:</strong><br>
+                                    <span id="dfs-activar" style="color:#34d399; font-weight:600;">Glúteo mayor, Glúteo medio, Core lumbo-pélvico</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dfs-card" style="border-top: 3px solid #10b981;">
+                            <div class="dfs-card-header">EVALUACIÓN FUNCIONAL</div>
+                            <div class="dfs-card-title">⚡ Pruebas Funcionales</div>
+                            <div class="dfs-card-body">
+                                <div style="margin-bottom:8px;">
+                                    <strong>Long-Sitting Test:</strong><br>
+                                    <span id="dfs-long-sitting" style="color:#34d399; font-weight:600;">Pierna corta en supino se alarga al sentarse</span>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <strong>Maléolo en Supino:</strong><br>
+                                    <span id="dfs-maleolo">Corto funcional</span>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <strong>Supino vs Prono:</strong><br>
+                                    <span id="dfs-supino-prono">Pierna corta constante en supino y prono</span>
+                                </div>
+                                <div>
+                                    <strong>Spring Test Sacro:</strong><br>
+                                    <span id="dfs-spring" style="font-weight:600;">Neutro</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dfs-section-header">🎯 Protocolo de Tratamiento & Corrección Manual:</div>
+
+                    <div class="dfs-grid-2">
+                        <div class="dfs-card" style="border-left: 4px solid #0284c7;">
+                            <div class="dfs-card-header">MANIPULACIÓN ARTICULAR</div>
+                            <div class="dfs-card-title">🔨 Ajuste HVLA: <span id="dfs-adj-tecnica">Side-Posture Gonstead PI / Drop Pelviano</span></div>
+                            <hr style="margin:8px 0; border:0; border-top:1px solid #1e293b;" />
+                            <div class="dfs-card-body">
+                                <p style="margin-bottom:6px;"><strong>Posición del Paciente:</strong> <span id="dfs-adj-posicion">Decúbito lateral con hemipelvis afectada hacia arriba</span></p>
+                                <p style="margin-bottom:6px;"><strong>PCP (Punto de Contacto Paciente):</strong> <span id="dfs-adj-pcp" style="color:#38bdf8; font-weight:600;">Aspecto postero-inferior de la EIPS homolateral</span></p>
+                                <p style="margin-bottom:6px;"><strong>PCC (Punto de Contacto Clínico):</strong> <span id="dfs-adj-pcc">Pisiforme / eminencia hipotenar</span></p>
+                                <p style="margin-bottom:6px;"><strong>LOD (Línea de Conducción / Vector):</strong> <span id="dfs-adj-lod" style="color:#34d399; font-weight:600;">Posterior a Anterior (P-A) caudal ~45°</span></p>
+                                <div class="dfs-alert-box">
+                                    <strong>⚠️ Precaución Técnica:</strong> <span id="dfs-adj-advertencia">Prohibido empuje cefálico/superior; acentúa el brazo de palanca posterior.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dfs-card" style="border-left: 4px solid #10b981;">
+                            <div class="dfs-card-header">REEDUCACIÓN NEUROMUSCULAR</div>
+                            <div class="dfs-card-title">🧘 Técnica MET: <span id="dfs-met-nombre">MET de Fred Mitchell Sr. para Ilíaco Posterior</span></div>
+                            <hr style="margin:8px 0; border:0; border-top:1px solid #1e293b;" />
+                            <div class="dfs-card-body">
+                                <p style="margin-bottom:6px;"><strong>Posición:</strong> <span id="dfs-met-posicion">Decúbito prono con rodilla en 90° o supino</span></p>
+                                <p style="margin-bottom:6px;"><strong>Músculo Motor Clave:</strong> <span id="dfs-met-musculo" style="color:#34d399; font-weight:600;">Recto femoral y Psoas ilíaco</span></p>
+                                <p style="margin-bottom:6px;"><strong>Acción Isométrica:</strong> <span id="dfs-met-accion">Contracción isométrica resistida de flexores de cadera al 20-25% por 7-10 s</span></p>
+                                <div class="dfs-success-box">
+                                    <strong>Fase Post-Isométrica (Relajación):</strong> <span id="dfs-met-fase">Guiar cadera a mayor extensión pasiva induciendo la basculación anterior del coxal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>"""
         else:
             btn_ficha_html = ""
             didactic_card_html = ""
+            didactic_full_sheet_html = ""
     else:
         bar_title_html = "<span>🦴 VISOR 3D ANATÓMICO (PRE-AJUSTE)</span>"
         status_badge_html = '<span id="status-badge" class="badge-status badge-dysfunction">🔴 CASO PACIENTE</span>'
@@ -1406,6 +1657,7 @@ def generar_visor_3d_pelvis(
         btn_ficha_html = ""
         subtoolbar_html = ""
         didactic_card_html = ""
+        didactic_full_sheet_html = ""
 
     html = f"""
     <!DOCTYPE html>
@@ -1423,8 +1675,9 @@ def generar_visor_3d_pelvis(
                 margin: 0;
                 padding: 0;
                 width: 100%;
-                height: 100%;
-                overflow: hidden;
+                min-height: 100%;
+                overflow-x: hidden;
+                overflow-y: auto;
                 background-color: #0b0f19 !important;
                 color: #e2e8f0;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -1435,12 +1688,10 @@ def generar_visor_3d_pelvis(
                 border-radius: 12px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
                 width: 100%;
-                height: 100%;
                 max-width: 100%;
                 display: flex;
                 flex-direction: column;
                 position: relative;
-                overflow: hidden;
             }}
             .top-toolbar {{
                 width: 100%;
@@ -1760,7 +2011,7 @@ def generar_visor_3d_pelvis(
             }}
             #canvas-container {{
                 width: 100%;
-                height: 850px; /* Que coincida con la altura de components.html */
+                height: {altura_canvas}px;
                 position: relative;
                 background-color: #0b0f19 !important;
                 display: flex;
@@ -1775,7 +2026,7 @@ def generar_visor_3d_pelvis(
             .canvas-area {{
                 position: relative;
                 width: 100%;
-                height: 850px;
+                height: {altura_canvas}px;
                 background-color: #0b0f19 !important;
                 display: flex;
                 justify-content: center;
@@ -1789,7 +2040,7 @@ def generar_visor_3d_pelvis(
             #webglCanvas {{
                 position: relative;
                 width: 100%;
-                height: 850px;
+                height: {altura_canvas}px;
                 display: block;
                 background-color: #0b0f19 !important;
                 overflow: hidden;
@@ -1953,6 +2204,150 @@ def generar_visor_3d_pelvis(
                 border-radius: 50%;
                 flex-shrink: 0;
             }}
+            /* Ficha Biomecánica Didáctica Completa Dinámica */
+            .didactic-full-sheet {{
+                width: 100%;
+                padding: 16px 18px 24px 18px;
+                background: #0b0f19;
+                color: #e2e8f0;
+                box-sizing: border-box;
+                border-top: 1px solid #1e293b;
+            }}
+            .dfs-banner {{
+                background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+                border: 1px solid #334155;
+                border-left: 5px solid #0284c7;
+                padding: 14px 20px;
+                margin-bottom: 16px;
+                border-radius: 10px;
+                box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 12px;
+            }}
+            .dfs-badge {{
+                background: #0284c7;
+                color: #ffffff;
+                font-weight: 700;
+                font-size: 10px;
+                letter-spacing: 0.05em;
+                padding: 3px 10px;
+                border-radius: 999px;
+                display: inline-block;
+            }}
+            .dfs-title {{
+                margin: 6px 0 2px 0;
+                color: #38bdf8;
+                font-size: 18px;
+                font-weight: 700;
+            }}
+            .dfs-subtitle {{
+                color: #94a3b8;
+                font-size: 12px;
+                margin-top: 3px;
+            }}
+            .dfs-tag-box {{
+                background: rgba(2, 132, 199, 0.15);
+                border: 1px solid rgba(56, 189, 248, 0.4);
+                border-radius: 8px;
+                padding: 8px 14px;
+                text-align: right;
+            }}
+            .dfs-grid-4 {{
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+                margin-bottom: 16px;
+            }}
+            @media (max-width: 900px) {{
+                .dfs-grid-4 {{
+                    grid-template-columns: repeat(2, 1fr);
+                }}
+            }}
+            @media (max-width: 600px) {{
+                .dfs-grid-4 {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
+            .dfs-grid-2 {{
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                margin-bottom: 12px;
+            }}
+            @media (max-width: 768px) {{
+                .dfs-grid-2 {{
+                    grid-template-columns: 1fr;
+                }}
+            }}
+            .dfs-card {{
+                background: #111e38;
+                border: 1px solid #1e293b;
+                border-radius: 10px;
+                padding: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+                display: flex;
+                flex-direction: column;
+            }}
+            .dfs-card-header {{
+                font-size: 10px;
+                color: #94a3b8;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                margin-bottom: 4px;
+            }}
+            .dfs-card-title {{
+                font-size: 14px;
+                font-weight: 700;
+                color: #f8fafc;
+                margin-bottom: 10px;
+            }}
+            .dfs-card-body {{
+                font-size: 11.5px;
+                color: #cbd5e1;
+                line-height: 1.55;
+                flex-grow: 1;
+            }}
+            .dfs-card-body strong {{
+                color: #f1f5f9;
+            }}
+            .dfs-card-body ul {{
+                padding-left: 18px;
+                margin: 0;
+            }}
+            .dfs-card-body li {{
+                margin-bottom: 4px;
+            }}
+            .dfs-alert-box {{
+                background: rgba(239, 68, 68, 0.12);
+                border: 1px solid rgba(239, 68, 68, 0.3);
+                border-radius: 6px;
+                padding: 6px 10px;
+                color: #fca5a5;
+                font-size: 11px;
+                margin-top: 8px;
+            }}
+            .dfs-success-box {{
+                background: rgba(16, 185, 129, 0.12);
+                border: 1px solid rgba(16, 185, 129, 0.3);
+                border-radius: 6px;
+                padding: 6px 10px;
+                color: #6ee7b7;
+                font-size: 11px;
+                margin-top: 8px;
+            }}
+            .dfs-section-header {{
+                font-size: 14px;
+                font-weight: 700;
+                color: #f8fafc;
+                margin: 10px 0 8px 0;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }}
         </style>
         <!-- Scripts Three.js, OrbitControls, GLTFLoader y CSS2DRenderer -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -2027,6 +2422,8 @@ def generar_visor_3d_pelvis(
                     Modelo: Pelvis Anatómica CT (Sacrum, Hip_L, Hip_R)
                 </div>
             </div>
+
+            {didactic_full_sheet_html}
         </div>
 
         <script>
@@ -2147,6 +2544,8 @@ def generar_visor_3d_pelvis(
             }}
 
             // Parámetros clínicos inyectados
+            const CLINICAL_KNOWLEDGE_DATA = {json_payload};
+            const CANVAS_HEIGHT = {altura_canvas};
             let currentPatientSide = "{lado}";
             let isRight = (currentPatientSide === "Derecho");
             const clinicalTargetRotX = {target_rot_rad};
@@ -2248,19 +2647,19 @@ def generar_visor_3d_pelvis(
                 }}
 
                 const width = container.clientWidth || 940;
-                const height = 850;
+                const height = CANVAS_HEIGHT;
 
                 scene = new THREE.Scene();
                 scene.background = new THREE.Color(0x0b0f19);
 
-                camera = new THREE.PerspectiveCamera(45, (container.clientWidth || 940) / 850, 0.05, 100);
+                camera = new THREE.PerspectiveCamera(45, (container.clientWidth || 940) / CANVAS_HEIGHT, 0.05, 100);
                 camera.position.set(0, 0, DEFAULT_CAM_DISTANCE);
 
                 // Renderer 3D con antialiasing, soporte retina (pixelRatio) y tone mapping cinematográfico
                 renderer = new THREE.WebGLRenderer({{ antialias: true, alpha: true, powerPreference: "high-performance" }});
                 renderer.setClearColor(0x0b0f19, 1.0);
-                renderer.setSize(container.clientWidth, 850);
-                camera.aspect = container.clientWidth / 850;
+                renderer.setSize(container.clientWidth, CANVAS_HEIGHT);
+                camera.aspect = container.clientWidth / CANVAS_HEIGHT;
                 camera.updateProjectionMatrix();
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -2271,12 +2670,12 @@ def generar_visor_3d_pelvis(
                 // Renderer 2D de etiquetas anatómicas vectoriales nítidas (CSS2DRenderer)
                 if (typeof THREE.CSS2DRenderer !== 'undefined') {{
                     labelRenderer = new THREE.CSS2DRenderer();
-                    labelRenderer.setSize(container.clientWidth, 850);
+                    labelRenderer.setSize(container.clientWidth, CANVAS_HEIGHT);
                     labelRenderer.domElement.style.position = 'absolute';
                     labelRenderer.domElement.style.top = '0px';
                     labelRenderer.domElement.style.left = '0px';
                     labelRenderer.domElement.style.width = '100%';
-                    labelRenderer.domElement.style.height = '850px';
+                    labelRenderer.domElement.style.height = CANVAS_HEIGHT + 'px';
                     labelRenderer.domElement.style.pointerEvents = 'none';
                     labelRenderer.domElement.style.overflow = 'hidden';
                     container.appendChild(labelRenderer.domElement);
@@ -2431,6 +2830,9 @@ def generar_visor_3d_pelvis(
                 setTimeout(onWindowResize, 80);
                 setupDragAndDrop();
 
+                // Sincronizar Ficha Biomecánica Didáctica con el estado inicial
+                updateDidacticFullSheet(currentActivePreset, currentPatientSide);
+
                 // Loop de animación seguro
                 animate();
             }}
@@ -2438,11 +2840,11 @@ def generar_visor_3d_pelvis(
             function onWindowResize() {{
                 if (!container || !renderer || !camera) return;
                 const w = container.clientWidth || 940;
-                camera.aspect = w / 850;
+                camera.aspect = w / CANVAS_HEIGHT;
                 camera.updateProjectionMatrix();
-                renderer.setSize(w, 850);
+                renderer.setSize(w, CANVAS_HEIGHT);
                 if (labelRenderer) {{
-                    labelRenderer.setSize(w, 850);
+                    labelRenderer.setSize(w, CANVAS_HEIGHT);
                 }}
             }}
 
@@ -2993,19 +3395,19 @@ def generar_visor_3d_pelvis(
                     correction: "• Ajuste HVLA: Decúbito lateral con hemipelvis afectada arriba. PCP: Cara medial de EIPS superior. LOD: Medial a Lateral (M-L) con antebrazo perpendicular para abrir la espina hacia lateral.\\n• MET (Mitchell): Cadera flectada a 90°. Contracción isométrica de aductores hacia línea media al 20-25% por 7-10s. Relajación y abducción pasiva hacia la barrera."
                 }},
                 "torsion_ant": {{
-                    title: "Torsión Sacra Anterior (D/D o I/I)",
+                    title: "Torsión Sacra Anterior (R/R o L/L) (Fisiológica)",
                     category: "Disfunción Sacroilíaca sobre Eje Oblicuo (Fisiológica)",
-                    listing: "Mitchell: Torsión Anterior (Derecha/Derecha o Izquierda/Izquierda)",
+                    listing: "Mitchell: Torsión Anterior (R/R o L/L)",
                     mechanism: "Sobrecarga en flexión con rotación lumbar sincronizada durante la marcha o levantamiento asimétrico en bipedestación.",
-                    palpation: "• Surco Sacro: Profundo en el lado opuesto al eje oblicuo dinámico\\n• Ángulo Inferolateral (AIL): Posterior e inferior contralateral al surco profundo\\n• Spring Test: NEGATIVO (retiene elasticidad normal y lordosis fisiológica)\\n• Test Supino/Prono: Inversión (pierna que parece larga en supino pasa a ser corta en prono)\\n• Piramidal: Espasmo e hipertonía notable del lado del eje oblicuo",
+                    palpation: "• Si R/R: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación anterior de la base sacra izquierda (sulcus izquierdo anterior/profundo, AIL derecho posterior/inferior)\\n• Si L/L: Eje oblicuo izquierdo. Rotación anterior de la base sacra derecha\\n• Spring Test: NEGATIVO (retiene elasticidad normal)\\n• Test Supino/Prono: Inversión de longitud maleolar",
                     correction: "• Ajuste HVLA: Paciente en decúbito lateral sobre el lado de la base profunda (abajo). Flexión de cadera >90° para fijar L5-S1. PCP: Pisiforme sobre AIL posteriorizado arriba. LOD: P-A rápido para desrotar el sacro.\\n• MET (Mitchell): Posición de Sims (semi-prono) sobre el lado del eje oblicuo. El paciente intenta elevar ambos tobillos hacia el techo al 25% por 7-10s contra resistencia fija."
                 }},
                 "torsion_post": {{
-                    title: "Torsión Sacra Posterior (D/I o I/D)",
+                    title: "Torsión Sacra Posterior (R/L o L/R) (No Fisiológica)",
                     category: "Disfunción Sacroilíaca sobre Eje Oblicuo (No Fisiológica)",
-                    listing: "Mitchell: Torsión Posterior (Derecha/Izquierda o Izquierda/Derecha)",
+                    listing: "Mitchell: Torsión Posterior (R/L o L/R)",
                     mechanism: "Flexión de tronco brusca con carga excéntrica inesperada o traumatismo en caída que atrapa el sacro en retroversión no fisiológica.",
-                    palpation: "• Surco Sacro: Plano, superficial y doloroso (base sacra posteriorizada hacia atrás)\\n• Ángulo Inferolateral (AIL): Anterior y superior contralateral a la base posteriorizada\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera, sin juego elástico, rectificación lumbar)\\n• Test Supino/Prono: Inversión (pierna corta en supino pasa a ser larga en prono)\\n• Tensión miofascial: Severa hipertonía de multífidos L5-S1 y piramidal",
+                    palpation: "• Si R/L: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación posterior de la base sacra izquierda (sulcus izquierdo posterior/lleno, AIL izquierdo anterior)\\n• Si L/R: Eje oblicuo izquierdo. Rotación posterior de la base sacra derecha\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera)\\n• Test Supino/Prono: Inversión de longitud maleolar",
                     correction: "• Ajuste HVLA: Decúbito lateral con la base sacra posteriorizada arriba. Cadera flexionada >90°. PCP: Eminencia hipotenar directamente en el sulcus/base sacra rígida. LOD: P-A con ligero vector M-L para intruir la base fija hacia anterior.\\n• MET (Mitchell): Decúbito lateral sobre el lado opuesto al eje oblicuo (tronco rotado hacia atrás). Pierna superior extendida colgando detrás de la camilla. Contracción isométrica de extensión de cadera al 25% por 7-10s."
                 }},
                 "pubis_up": {{
@@ -3462,6 +3864,134 @@ def generar_visor_3d_pelvis(
                 }}
 
                 updateDidacticCard(presetKey);
+                updateDidacticFullSheet(presetKey, currentPatientSide);
+            }}
+
+            function updateDidacticFullSheet(presetKey, side) {{
+                const sheet = document.getElementById('didacticFullSheet');
+                if (!sheet) return;
+                const data = CLINICAL_KNOWLEDGE_DATA[presetKey] || CLINICAL_KNOWLEDGE_DATA['pi'];
+                if (!data) return;
+
+                const effSide = side || currentPatientSide || 'Derecho';
+                const isR = (effSide === 'Derecho');
+                const isBilateral = (presetKey === 'sacro_flexion' || presetKey === 'sacro_extension' || presetKey === 'neutral');
+                const sideText = isBilateral ? (presetKey === 'neutral' ? 'Simétrica Bilateral' : 'Bilateral') : effSide;
+
+                let displayTitle = data.nombre_clinico;
+                let displayListing = data.listing || 'N/D';
+                let surcoDisplay = (data.crit && data.crit.surco_sacro) ? data.crit.surco_sacro : 'Simétrico';
+                let ailDisplay = (data.crit && data.crit.ail) ? data.crit.ail : 'Simétrico';
+
+                if (presetKey === 'torsion_post') {{
+                    if (isR) {{
+                        displayTitle = 'Torsión Sacra Posterior (R/L) (No Fisiológica)';
+                        displayListing = 'Mitchell: Torsión Posterior R/L (Eje Oblicuo Derecho)';
+                        surcoDisplay = 'Sulcus izquierdo plano/lleno (posteriorizado, rígido)';
+                        ailDisplay = 'AIL izquierdo anterior y superior';
+                    }} else {{
+                        displayTitle = 'Torsión Sacra Posterior (L/R) (No Fisiológica)';
+                        displayListing = 'Mitchell: Torsión Posterior L/R (Eje Oblicuo Izquierdo)';
+                        surcoDisplay = 'Sulcus derecho plano/lleno (posteriorizado, rígido)';
+                        ailDisplay = 'AIL derecho anterior y superior';
+                    }}
+                }} else if (presetKey === 'torsion_ant') {{
+                    if (isR) {{
+                        displayTitle = 'Torsión Sacra Anterior (R/R) (Fisiológica)';
+                        displayListing = 'Mitchell: Torsión Anterior R/R (Eje Oblicuo Derecho)';
+                        surcoDisplay = 'Sulcus izquierdo anterior/profundo en nutación';
+                        ailDisplay = 'AIL derecho posterior e inferior';
+                    }} else {{
+                        displayTitle = 'Torsión Sacra Anterior (L/L) (Fisiológica)';
+                        displayListing = 'Mitchell: Torsión Anterior L/L (Eje Oblicuo Izquierdo)';
+                        surcoDisplay = 'Sulcus derecho anterior/profundo en nutación';
+                        ailDisplay = 'AIL izquierdo posterior e inferior';
+                    }}
+                }}
+
+                const titleElem = document.getElementById('dfs-title');
+                if (titleElem) titleElem.textContent = `${{displayTitle}} — Hemipelvis ${{sideText}}`;
+
+                const listingElem = document.getElementById('dfs-listing');
+                if (listingElem) listingElem.textContent = displayListing;
+
+                const ejeElem = document.getElementById('dfs-eje');
+                if (ejeElem) ejeElem.textContent = data.eje_movimiento || 'Articulación SI';
+
+                const catElem = document.getElementById('dfs-cat');
+                if (catElem) catElem.textContent = data.categoria || 'Disfunción Pélvica';
+
+                // 1. Palpación Clínica
+                const crit = data.crit || {{}};
+                const eiasElem = document.getElementById('dfs-eias');
+                if (eiasElem) eiasElem.textContent = crit.eias || 'N/A';
+                const eipsElem = document.getElementById('dfs-eips');
+                if (eipsElem) eipsElem.textContent = crit.eips || 'N/A';
+                const crestaElem = document.getElementById('dfs-cresta');
+                if (crestaElem) crestaElem.textContent = crit.cresta || 'N/A';
+                const isquionElem = document.getElementById('dfs-isquion');
+                if (isquionElem) isquionElem.textContent = crit.isquion || 'N/A';
+                const sinfisisElem = document.getElementById('dfs-sinfisis');
+                if (sinfisisElem) sinfisisElem.textContent = crit.sinfisis || 'N/A';
+                const surcoAilElem = document.getElementById('dfs-surco-ail');
+                if (surcoAilElem) surcoAilElem.textContent = `${{surcoDisplay}} / ${{ailDisplay}}`;
+
+                // 2. Dinámica Articular
+                const ejeMovElem = document.getElementById('dfs-eje-mov');
+                if (ejeMovElem) ejeMovElem.textContent = data.eje_movimiento || 'Articulación SI';
+                const cinemElem = document.getElementById('dfs-cinematica');
+                if (cinemElem) cinemElem.textContent = data.cinematica_resumen || 'Movimiento tridimensional acoplado.';
+                const mecElem = document.getElementById('dfs-mecanismo');
+                if (mecElem) mecElem.textContent = data.mecanismo || 'Sobrecarga biomecánica o traumatismo.';
+
+                // 3. Estado Tisular
+                const mio = data.miofascial || {{}};
+                const tejElem = document.getElementById('dfs-tejidos');
+                if (tejElem) tejElem.textContent = crit.tejidos_blandos || 'Normal';
+                const inhibirElem = document.getElementById('dfs-inhibir');
+                if (inhibirElem) inhibirElem.textContent = Array.isArray(mio.inhibir) ? mio.inhibir.join(', ') : (mio.inhibir || 'Evaluación específica');
+                const alertaElem = document.getElementById('dfs-alerta');
+                if (alertaElem) alertaElem.textContent = mio.precaucion_reactiva || 'Monitorear tono muscular.';
+                const activarElem = document.getElementById('dfs-activar');
+                if (activarElem) activarElem.textContent = Array.isArray(mio.activar) ? mio.activar.join(', ') : (mio.activar || 'Estabilizadores pélvicos');
+
+                // 4. Evaluación Funcional
+                const lsElem = document.getElementById('dfs-long-sitting');
+                if (lsElem) lsElem.textContent = crit.long_sitting || 'Neutro';
+                const malElem = document.getElementById('dfs-maleolo');
+                if (malElem) malElem.textContent = crit.maleolo_supino || 'Simétrico';
+                const supPronoElem = document.getElementById('dfs-supino-prono');
+                if (supPronoElem) supPronoElem.textContent = crit.pierna_supino_prono || 'Sin alteración relativa';
+                const springElem = document.getElementById('dfs-spring');
+                if (springElem) springElem.textContent = crit.spring_test || 'Negativo';
+
+                // 5. Manipulación Articular (Ajuste HVLA)
+                const ajuste = data.ajuste || {{}};
+                const adjTecElem = document.getElementById('dfs-adj-tecnica');
+                if (adjTecElem) adjTecElem.textContent = ajuste.tecnica || 'Side-Posture';
+                const adjPosElem = document.getElementById('dfs-adj-posicion');
+                if (adjPosElem) adjPosElem.textContent = ajuste.posicion_paciente || 'Decúbito lateral';
+                const adjPcpElem = document.getElementById('dfs-adj-pcp');
+                if (adjPcpElem) adjPcpElem.textContent = ajuste.pcp || 'EIPS';
+                const adjPccElem = document.getElementById('dfs-adj-pcc');
+                if (adjPccElem) adjPccElem.textContent = ajuste.pcc || 'Pisiforme / Hipotenar';
+                const adjLodElem = document.getElementById('dfs-adj-lod');
+                if (adjLodElem) adjLodElem.textContent = ajuste.linea_correccion || 'P-A';
+                const adjAdvElem = document.getElementById('dfs-adj-advertencia');
+                if (adjAdvElem) adjAdvElem.textContent = ajuste.advertencia || 'Respetar barrera motriz sin rebote.';
+
+                // 6. Reeducación Neuromuscular (MET)
+                const met = data.met || {{}};
+                const metNomElem = document.getElementById('dfs-met-nombre');
+                if (metNomElem) metNomElem.textContent = met.nombre || 'MET de Fred Mitchell Sr.';
+                const metPosElem = document.getElementById('dfs-met-posicion');
+                if (metPosElem) metPosElem.textContent = met.posicion || 'Decúbito supino/prono';
+                const metMuscElem = document.getElementById('dfs-met-musculo');
+                if (metMuscElem) metMuscElem.textContent = met.musculo_motor || 'Flexores/Extensores';
+                const metAccElem = document.getElementById('dfs-met-accion');
+                if (metAccElem) metAccElem.textContent = met.accion || 'Contracción resistida al 20-25% por 7-10s.';
+                const metFaseElem = document.getElementById('dfs-met-fase');
+                if (metFaseElem) metFaseElem.textContent = met.fase_post || 'Ganancia pasiva hacia nueva barrera motriz.';
             }}
 
             // Compatibilidad con llamadas heredadas
@@ -3841,6 +4371,44 @@ def generar_visor_3d_pelvis(
 
 # Alias de compatibilidad histórica
 generar_simulador_dinamico_svg = generar_visor_3d_pelvis
+
+
+def generar_simulador_hvla_3d(
+    lado: str,
+    diagnostico: DiagnosticoBiomecanico,
+    palpacion: Optional[ExamenPalpatorio] = None
+) -> str:
+    """Genera una escena 3D side-posture con una secuencia HVLA educativa."""
+    info = get_disfuncion_info(diagnostico.clave_conocimiento) if diagnostico.clave_conocimiento else {}
+    ajuste = info.get("ajuste_articular", {}) if info else {}
+    clave = (diagnostico.clave_conocimiento or "").upper()
+    is_right = lado == "Derecho"
+
+    def safe(value: str) -> str:
+        return (str(value).replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace('"', "&quot;"))
+
+    tecnica = safe(ajuste.get("tecnica", "Movilización articular funcional"))
+    pcc = safe(ajuste.get("pcc", "Pisiforme / eminencia hipotenar"))
+    pcp = safe(ajuste.get("pcp", "Reparo óseo de la hemipelvis afectada"))
+    lod = safe(ajuste.get("linea_correccion", "Vector de corrección específico"))
+    posicion = safe(ajuste.get("posicion_paciente", "Decúbito lateral con hemipelvis afectada arriba"))
+    advertencia = safe(ajuste.get("advertencia", "Respetar la barrera motriz y verificar contraindicaciones."))
+    titulo = safe(diagnostico.titulo)
+    lado_sign = -1 if is_right else 1
+    vector = "P-A 45° caudal hacia eje transversal S3" if "ILIACO_POSTERIOR" in clave else lod
+    return f"""
+<!doctype html><html lang="es"><head><meta charset="utf-8"><style>
+*{{box-sizing:border-box}}body{{margin:0;background:#0b0f19;color:#dcecf0;font-family:ui-sans-serif,system-ui,sans-serif;overflow:hidden}}#module{{border:1px solid #23404b;border-radius:10px;overflow:hidden;background:radial-gradient(circle at 30% 35%,#16323a,#0b0f19 70%)}}header,footer{{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 15px;background:#0c2028;border-bottom:1px solid #23404b;font-size:11px}}header strong{{color:#68e0c0;letter-spacing:.08em}}#stage{{height:570px;position:relative}}#scene{{width:100%;height:100%;display:block}}#hud{{position:absolute;right:14px;top:14px;width:min(360px,42%);padding:14px;background:#091820dd;border:1px solid #3c7780;border-radius:8px;backdrop-filter:blur(12px);font-size:11px;line-height:1.35}}#hud h3{{margin:0 0 10px;color:#71e6cb;font-size:12px;letter-spacing:.06em}}.row{{margin:7px 0;padding-left:8px;border-left:2px solid #43bda2}}.label{{display:block;color:#7d9da5;text-transform:uppercase;font-size:9px;font-weight:700}}.warn{{color:#ffc2a6;border-left-color:#f47d62}}button{{border:1px solid #65e0bd;background:#126b5b;color:white;border-radius:5px;padding:7px 11px;font-weight:700;font-size:11px;cursor:pointer}}#phase{{color:#f6c768;font-weight:700}}footer{{border:0;color:#8eabb2}}
+</style></head><body><div id="module"><header><strong>● MÓDULO B / SIMULADOR BIOMECÁNICO 3D</strong><span>LADO: {safe(lado)}</span><button onclick="simulateHVLA()">⚡ Simular Impulso HVLA</button></header><div id="stage"><canvas id="scene"></canvas><section id="hud"><h3>ESPECIFICACIÓN DEL AJUSTE</h3><div class="row"><span class="label">Diagnóstico</span>{titulo}</div><div class="row"><span class="label">Técnica</span>{tecnica}</div><div class="row"><span class="label">PCC / mano caudal</span>{pcc}</div><div class="row"><span class="label">PCP / reparo óseo</span>{pcp}</div><div class="row"><span class="label">LOD / vector</span>{vector}</div><div class="row"><span class="label">Posición</span>{posicion}</div><div class="row warn"><span class="label">Precaución</span>{advertencia}</div><div class="row"><span class="label">Fase</span><span id="phase">NEUTRA · LISTO PARA AJUSTE</span></div></section></div><footer><span>Side-posture · pelvis fijada · cadera afectada en flexión funcional</span><span>HVLA al final del rango pasivo</span></footer></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script><script>
+const canvas=document.getElementById('scene'),scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,.1,100);camera.position.set(5,2.8,7);const renderer=new THREE.WebGLRenderer({{canvas:canvas,antialias:true,alpha:true}});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setClearColor(0x0b0f19,0);scene.add(new THREE.HemisphereLight(0xbcecff,0x10252b,2.3));const key=new THREE.DirectionalLight(0xffffff,3);key.position.set(4,6,5);scene.add(key);
+const patient=new THREE.Group(),pelvis=new THREE.Group(),trunk=new THREE.Group(),leg=new THREE.Group(),hands=new THREE.Group();patient.add(pelvis,trunk,leg,hands);scene.add(patient);const matPelvis=new THREE.MeshStandardMaterial({{color:0x74a7aa,transparent:true,opacity:.82}}),matBone=new THREE.MeshStandardMaterial({{color:0xd4b58b}}),matCloth=new THREE.MeshStandardMaterial({{color:0x274653}}),matHand=new THREE.MeshStandardMaterial({{color:0xffa98d,transparent:true,opacity:.58,wireframe:true}}),matAccent=new THREE.MeshBasicMaterial({{color:0x52e0bd}});
+function add(o,p){{p.add(o);return o}}function box(s,p,m,g){{const o=add(new THREE.Mesh(new THREE.BoxGeometry(...s),m),g);o.position.set(...p);return o}}function sphere(r,p,m,g){{const o=add(new THREE.Mesh(new THREE.SphereGeometry(r,24,16),m),g);o.position.set(...p);return o}}function bone(a,b,r,m,g){{const v=new THREE.Vector3().subVectors(new THREE.Vector3(...b),new THREE.Vector3(...a)),o=add(new THREE.Mesh(new THREE.CapsuleGeometry(r,v.length(),8,16),m),g);o.position.copy(new THREE.Vector3(...a).add(new THREE.Vector3(...b)).multiplyScalar(.5));o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());return o}}
+box([3.3,.55,1.9],[0,-.55,0],matCloth,patient);box([3.8,.12,2.2],[0,-.23,0],matBone,patient);pelvis.rotation.z=.08;box([2.35,1.35,1.05],[0,.6,0],matPelvis,pelvis);sphere(.7,[-1,.35,0],matPelvis,pelvis);sphere(.7,[1,.35,0],matPelvis,pelvis);box([.35,1.25,.5],[0,1.35,0],matBone,pelvis);box([1.7,1.9,1.15],[.3,2.05,0],matCloth,trunk);sphere(.48,[.7,3.3,0],matBone,trunk);box([1.9,.3,1.3],[.3,3.2,0],matCloth,trunk);
+bone([1,.35,0],[1.75,-.55,.1],.27,matBone,leg);bone([1.75,-.55,.1],[2.25,-.95,.15],.22,matBone,leg);leg.rotation.z=-.65;bone([-1,.45,.12],[-1.7,-.15,.2],.22,matBone,leg);bone([-1.7,-.15,.2],[-1.95,-.85,.2],.18,matBone,leg);leg.rotation.z=.15;const caudal=box([.3,.85,.42],[-1.05,.92,.72],matHand,hands),cephalic=box([.35,.85,.42],[.45,2.35,.72],matHand,hands);caudal.rotation.z=-.35;cephalic.rotation.z=.75;const contact=sphere(.13,[-1,.78,.92],matAccent,hands);const axis=new THREE.ArrowHelper(new THREE.Vector3(-.7*{lado_sign},-.5,0).normalize(),new THREE.Vector3(-1,.8,.95),1.15,0x52e0bd,.18,.12);scene.add(axis);
+let phase='idle',t=0;function simulateHVLA(){{if(phase!=='idle')return;phase='tension';t=0}}function animate(){{requestAnimationFrame(animate);const dt=.016;if(phase!=='idle'){{t+=dt;const q=phase==='tension'?Math.min(t/1.25,1):phase==='thrust'?Math.min(t/.16,1):Math.min(t/1.1,1),e=q*q*(3-2*q);if(phase==='tension'){{trunk.rotation.z=.16*e;pelvis.rotation.z=.08-.12*e;document.getElementById('phase').textContent='PUESTA EN TENSIÓN · FIJACIÓN PÉLVICA';if(q>=1){{phase='thrust';t=0}}}}else if(phase==='thrust'){{patient.position.x=-.12*e*{lado_sign};hands.position.x=-.12*e*{lado_sign};document.getElementById('phase').textContent='THRUST · PA 45° CAUDAL HACIA S3';if(q>=1){{phase='return';t=0}}}}else{{trunk.rotation.z=.16*(1-e);pelvis.rotation.z=-.04+.12*e;patient.position.x=-.12*(1-e)*{lado_sign};hands.position.x=-.12*(1-e)*{lado_sign};document.getElementById('phase').textContent='RETORNO SUAVE · POSICIÓN CORREGIDA';if(q>=1){{phase='idle'}}}}}}renderer.render(scene,camera)}}animate();function resize(){{const r=canvas.parentElement.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}}addEventListener('resize',resize);resize();
+</script></body></html>"""
 
 
 def generar_diagrama_vectorial_ajuste(
@@ -4799,6 +5367,204 @@ with col_hdr_user:
     render_user_badge()
 
 
+def render_ficha_biomecanica_didactica(
+    diagnostico: Optional[DiagnosticoBiomecanico] = None,
+    palpacion: Optional[ExamenPalpatorio] = None,
+    preset_key: Optional[str] = None,
+    lado_override: Optional[str] = None
+) -> None:
+    """
+    Renderiza la Ficha Biomecánica Didáctica con correlación clínica inmediata
+    (Palpación Clínica, Dinámica Articular, Estado Tisular, Evaluación Funcional
+    y Protocolo de Corrección HVLA / MET).
+    Se utiliza al final del diagnóstico (Punto 2) y en los módulos de visualización.
+    """
+    if preset_key:
+        ck_key = PRESET_TO_CK_KEY.get(preset_key, "SACRO_FLEXION")
+        preset_actual = preset_key
+    elif diagnostico and diagnostico.clave_conocimiento:
+        ck_key = diagnostico.clave_conocimiento
+        preset_actual = CK_KEY_TO_PRESET.get(ck_key, "pi")
+    else:
+        ck_key = "SACRO_FLEXION"
+        preset_actual = "sacro_flexion"
+
+    info_clinica = get_disfuncion_info(ck_key)
+    meta_preset = ATLAS_PRESET_METADATA.get(preset_actual, {})
+    crit = info_clinica.get("criterios_diagnosticos", {})
+    ajuste = info_clinica.get("ajuste_articular", {})
+    met = info_clinica.get("tecnica_met", {})
+    miofascial = info_clinica.get("abordaje_miofascial", {})
+
+    lado = lado_override or (palpacion.lado_restriccion.value if palpacion else "Derecho")
+    if preset_actual in ["sacro_flexion", "sacro_extension"]:
+        lado_str = "Bilateral"
+    else:
+        lado_str = lado
+
+    titulo_mostrar = diagnostico.titulo if (diagnostico and not preset_key) else f"{info_clinica.get('nombre_clinico', 'Disfunción')} — Hemipelvis {lado_str}"
+
+    st.markdown(f"""
+    <div class="clinical-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left: 5px solid #0284c7; padding: 18px 24px; margin-top: 18px; margin-bottom: 20px; color: #f8fafc; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <span class="badge" style="background:#0284c7; color:#fff; font-weight:700; font-size:0.75rem; letter-spacing:0.05em; padding:3px 10px; border-radius:999px;">📋 FICHA BIOMECÁNICA DIDÁCTICA</span>
+                <h3 style="margin:6px 0 2px 0; color:#38bdf8; font-size:1.4rem; font-weight:700;">{titulo_mostrar}</h3>
+                <div style="color:#94a3b8; font-size:0.86rem; margin-top:3px;">
+                    <strong>🏷️ Listings:</strong> {meta_preset.get('listing', 'N/D')}
+                </div>
+            </div>
+            <div style="background:rgba(2, 132, 199, 0.15); border:1px solid rgba(56, 189, 248, 0.4); border-radius:8px; padding:10px 16px; text-align:right;">
+                <div style="font-size:0.72rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">Eje Articular / Clasificación</div>
+                <div style="font-size:0.95rem; font-weight:700; color:#38bdf8;">{info_clinica.get('eje_movimiento', 'Sacroilíaco')}</div>
+                <div style="font-size:0.8rem; color:#cbd5e1;">{info_clinica.get('categoria', 'Disfunción Pélvica')}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_c1, col_c2, col_c3, col_c4 = st.columns(4)
+
+    with col_c1:
+        st.markdown(f"""
+        <div class="clinical-card" style="height:100%; border-top: 3px solid #38bdf8;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">PALPACIÓN CLÍNICA</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">📍 Reparos Anatómicos</div>
+            <ul style="padding-left:16px; font-size:0.83rem; color:#334155; line-height:1.6; margin:0;">
+                <li><strong>EIAS:</strong> {crit.get('eias', 'N/A')}</li>
+                <li><strong>EIPS:</strong> {crit.get('eips', 'N/A')}</li>
+                <li><strong>Cresta Ilíaca:</strong> {crit.get('cresta', 'N/A')}</li>
+                <li><strong>Tub. Isquiática:</strong> {crit.get('isquion', 'N/A')}</li>
+                <li><strong>Sínfisis Púbica:</strong> {crit.get('sinfisis', 'N/A')}</li>
+                <li><strong>Surco Sacro / AIL:</strong> {crit.get('surco_sacro', 'Simétrico')} / {crit.get('ail', 'Simétrico')}</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_c2:
+        st.markdown(f"""
+        <div class="clinical-card" style="height:100%; border-top: 3px solid #f59e0b;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">DINÁMICA ARTICULAR</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">💥 Cinemática & Causa</div>
+            <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                <div style="margin-bottom:8px;">
+                    <strong>Eje de Movimiento:</strong><br>
+                    <span style="color:#0284c7; font-weight:600;">{info_clinica.get('eje_movimiento', 'Articulación SI')}</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Cinemática Articular:</strong><br>
+                    <span>{meta_preset.get('cinematica_resumen', 'Movimiento tridimensional acoplado.')}</span>
+                </div>
+                <div>
+                    <strong>Mecanismo Lesional:</strong><br>
+                    <span style="color:#475569;">{meta_preset.get('mecanismo', 'Sobrecarga biomecánica o traumatismo.')}</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_c3:
+        inhibir_str = ", ".join(miofascial.get("inhibir", [])) if miofascial.get("inhibir") else "Evaluación específica"
+        activar_str = ", ".join(miofascial.get("activar", [])) if miofascial.get("activar") else "Estabilizadores pélvicos"
+        alerta_str = miofascial.get("precaucion_reactiva", "Monitorear tono muscular.")
+        st.markdown(f"""
+        <div class="clinical-card" style="height:100%; border-top: 3px solid #ec4899;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">ESTADO TISULAR</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">🧬 Tensión Ligamentosa</div>
+            <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                <div style="margin-bottom:8px;">
+                    <strong>Tensión Ligamentosa:</strong><br>
+                    <span style="color:#be185d; font-weight:600;">{crit.get('tejidos_blandos', 'Normal')}</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Músculos a Inhibir / Liberar:</strong><br>
+                    <span style="color:#475569;">{inhibir_str}</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Alerta Reactiva:</strong><br>
+                    <span style="color:#b45309; font-size:0.8rem;">{alerta_str}</span>
+                </div>
+                <div>
+                    <strong>Activar / Fortalecer:</strong><br>
+                    <span style="color:#047857; font-weight:600;">{activar_str}</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_c4:
+        st.markdown(f"""
+        <div class="clinical-card" style="height:100%; border-top: 3px solid #10b981;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">EVALUACIÓN FUNCIONAL</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">⚡ Pruebas Funcionales</div>
+            <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
+                <div style="margin-bottom:8px;">
+                    <strong>Long-Sitting Test:</strong><br>
+                    <span style="color:#047857; font-weight:600;">{crit.get('long_sitting', 'Neutro')}</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Maléolo en Supino:</strong><br>
+                    <span>{crit.get('maleolo_supino', 'Simétrico')}</span>
+                </div>
+                <div style="margin-bottom:8px;">
+                    <strong>Supino vs Prono:</strong><br>
+                    <span>{crit.get('pierna_supino_prono', 'Sin alteración relativa')}</span>
+                </div>
+                <div>
+                    <strong>Spring Test Sacro:</strong><br>
+                    <span style="font-weight:600;">{crit.get('spring_test', 'Negativo')}</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("##### 🎯 Protocolo de Tratamiento & Corrección Manual:")
+    col_adj1, col_adj2 = st.columns(2)
+
+    with col_adj1:
+        alerta_contraind = ""
+        if diagnostico and diagnostico.contraindicacion_hvla:
+            alerta_contraind = """
+            <div style="margin-top:8px; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:0.8rem;">
+                <strong>⛔ HVLA CONTRAINDICADO:</strong> Paciente presenta banderas rojas en la anamnesis.
+            </div>
+            """
+        st.markdown(f"""
+        <div class="clinical-card" style="border-left:4px solid #0284c7;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">MANIPULACIÓN ARTICULAR</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🔨 Ajuste HVLA: {ajuste.get('tecnica', 'Side-Posture')}</div>
+            <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
+            <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
+                <p style="margin-bottom:6px;"><strong>Posición del Paciente:</strong> {ajuste.get('posicion_paciente', 'Decúbito lateral')}</p>
+                <p style="margin-bottom:6px;"><strong>PCP (Punto de Contacto Paciente):</strong> <span style="color:#0284c7; font-weight:600;">{ajuste.get('pcp', 'EIPS')}</span></p>
+                <p style="margin-bottom:6px;"><strong>PCC (Punto de Contacto Clínico):</strong> {ajuste.get('pcc', 'Pisiforme / Hipotenar')}</p>
+                <p style="margin-bottom:6px;"><strong>LOD (Línea de Conducción / Vector):</strong> <span style="color:#047857; font-weight:600;">{ajuste.get('linea_correccion', 'P-A')}</span></p>
+                <p style="margin-bottom:0; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:0.8rem;">
+                    <strong>⚠️ Precaución Técnica:</strong> {ajuste.get('advertencia', 'Respetar barrera motriz sin rebote.')}
+                </p>
+                {alerta_contraind}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_adj2:
+        st.markdown(f"""
+        <div class="clinical-card" style="border-left:4px solid #10b981;">
+            <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">REEDUCACIÓN NEUROMUSCULAR</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🧘 Técnica MET: {met.get('nombre', 'MET de Fred Mitchell Sr.')}</div>
+            <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
+            <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
+                <p style="margin-bottom:6px;"><strong>Posición:</strong> {met.get('posicion', 'Decúbito supino/prono')}</p>
+                <p style="margin-bottom:6px;"><strong>Músculo Motor Clave:</strong> <span style="color:#047857; font-weight:600;">{met.get('musculo_motor', 'Flexores/Extensores')}</span></p>
+                <p style="margin-bottom:6px;"><strong>Acción Isométrica:</strong> {met.get('accion', 'Contracción resistida al 20-25% por 7-10s.')}</p>
+                <p style="margin-bottom:0; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; padding:6px 10px; color:#065f46; font-size:0.8rem;">
+                    <strong>Fase Post-Isométrica (Relajación):</strong> {met.get('fase_post', 'Ganancia pasiva hacia nueva barrera motriz.')}
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+
 # ==============================================================================
 # MENÚ DE NAVEGACIÓN PRINCIPAL DEL SISTEMA (PERSISTENCIA ESTRICTA CON URL)
 # ==============================================================================
@@ -5196,6 +5962,12 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[1]:
     )
     diagnostico_actual = st.session_state["diagnostico_actual"]
 
+    # Conclusión del Diagnóstico y Ficha Didáctica Inmediata
+    st.markdown("---")
+    st.markdown("### 📋 Conclusión del Diagnóstico y Ficha Biomecánica Didáctica")
+    st.caption("Correlación biomecánica inmediata generada a partir del clúster de provocación y hallazgos del examen palpatorio del paciente.")
+    render_ficha_biomecanica_didactica(diagnostico=diagnostico_actual, palpacion=palpacion_inst)
+
 
 # ------------------------------------------------------------------------------
 # PÁGINA 3: VISUALIZACIÓN DINÁMICA DE CINEMÁTICA PELVIANA
@@ -5319,6 +6091,9 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
             )
             components.html(sim_html, height=850, scrolling=False)
 
+        st.markdown("---")
+        render_ficha_biomecanica_didactica(diagnostico=diagnostico_actual, palpacion=palpacion_inst)
+
     elif "Módulo B" in sel_modulo_vis:
         col_view_info, col_view_canvas = st.columns([1, 2.5])
         with col_view_info:
@@ -5349,12 +6124,12 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
             """)
 
         with col_view_canvas:
-            vector_html = generar_diagrama_vectorial_ajuste(
+            vector_html = generar_simulador_hvla_3d(
                 lado=palpacion_inst.lado_restriccion.value,
                 diagnostico=diagnostico_actual,
                 palpacion=palpacion_inst
             )
-            components.html(vector_html, height=550, scrolling=False)
+            components.html(vector_html, height=610, scrolling=False)
 
     else:
         @st.fragment
@@ -5371,7 +6146,7 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
             disf_seleccionada = disf_nombre_sel
             preset_actual = "pi"
 
-            # 2. VISOR 3D ANATÓMICO (100% interactivo, catálogo completo integrado sin reruns)
+            # 2. VISOR 3D ANATÓMICO (100% interactivo con Ficha Biomecánica Didáctica reactiva integrada)
             atlas_html = generar_visor_3d_pelvis(
                 palpacion=palpacion_inst,
                 diagnostico=diagnostico_actual,
@@ -5379,173 +6154,9 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
                 lado_inicial=lado_actual,
                 mostrar_ficha_didactica=True,
                 es_modo_atlas=True,
-                altura_canvas=850
+                altura_canvas=680
             )
-            components.html(atlas_html, height=850, scrolling=False)
-
-            # 3. FICHA BIOMECÁNICA Y DIDÁCTICA REUBICADA FUERA DEL CANVAS 3D
-            ck_key = PRESET_TO_CK_KEY.get(preset_actual, "SACRO_FLEXION")
-            info_clinica = get_disfuncion_info(ck_key)
-            meta_preset = ATLAS_PRESET_METADATA.get(preset_actual, {})
-            crit = info_clinica.get("criterios_diagnosticos", {})
-            ajuste = info_clinica.get("ajuste_articular", {})
-            met = info_clinica.get("tecnica_met", {})
-            miofascial = info_clinica.get("abordaje_miofascial", {})
-
-            # Banner informativo de la ficha
-            st.markdown(f"""
-            <div class="clinical-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left: 5px solid #0284c7; padding: 18px 24px; margin-top: 18px; margin-bottom: 20px; color: #f8fafc; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                    <div>
-                        <span class="badge" style="background:#0284c7; color:#fff; font-weight:700; font-size:0.75rem; letter-spacing:0.05em; padding:3px 10px; border-radius:999px;">📋 FICHA BIOMECÁNICA DIDÁCTICA</span>
-                        <h3 style="margin:6px 0 2px 0; color:#38bdf8; font-size:1.4rem; font-weight:700;">{info_clinica.get('nombre_clinico', disf_nombre_sel)} — Hemipelvis {lado_actual}</h3>
-                        <div style="color:#94a3b8; font-size:0.86rem; margin-top:3px;">
-                            <strong>🏷️ Listings:</strong> {meta_preset.get('listing', 'N/D')}
-                        </div>
-                    </div>
-                    <div style="background:rgba(2, 132, 199, 0.15); border:1px solid rgba(56, 189, 248, 0.4); border-radius:8px; padding:10px 16px; text-align:right;">
-                        <div style="font-size:0.72rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">Eje Articular / Clasificación</div>
-                        <div style="font-size:0.95rem; font-weight:700; color:#38bdf8;">{info_clinica.get('eje_movimiento', 'Sacroilíaco')}</div>
-                        <div style="font-size:0.8rem; color:#cbd5e1;">{info_clinica.get('categoria', cat_seleccionada)}</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # 4 Columnas informativas organizadas
-            col_c1, col_c2, col_c3, col_c4 = st.columns(4)
-
-            with col_c1:
-                st.markdown(f"""
-                <div class="clinical-card" style="height:100%; border-top: 3px solid #38bdf8;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">PALPACIÓN CLÍNICA</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">📍 Reparos Anatómicos</div>
-                    <ul style="padding-left:16px; font-size:0.83rem; color:#334155; line-height:1.6; margin:0;">
-                        <li><strong>EIAS:</strong> {crit.get('eias', 'N/A')}</li>
-                        <li><strong>EIPS:</strong> {crit.get('eips', 'N/A')}</li>
-                        <li><strong>Cresta Ilíaca:</strong> {crit.get('cresta', 'N/A')}</li>
-                        <li><strong>Tub. Isquiática:</strong> {crit.get('isquion', 'N/A')}</li>
-                        <li><strong>Sínfisis Púbica:</strong> {crit.get('sinfisis', 'N/A')}</li>
-                        <li><strong>Surco Sacro / AIL:</strong> {crit.get('surco_sacro', 'Simétrico')} / {crit.get('ail', 'Simétrico')}</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_c2:
-                st.markdown(f"""
-                <div class="clinical-card" style="height:100%; border-top: 3px solid #f59e0b;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">DINÁMICA ARTICULAR</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">💥 Cinemática & Causa</div>
-                    <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
-                        <div style="margin-bottom:8px;">
-                            <strong>Eje de Movimiento:</strong><br>
-                            <span style="color:#0284c7; font-weight:600;">{info_clinica.get('eje_movimiento', 'Articulación SI')}</span>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <strong>Cinemática Articular:</strong><br>
-                            <span>{meta_preset.get('cinematica_resumen', 'Movimiento tridimensional acoplado.')}</span>
-                        </div>
-                        <div>
-                            <strong>Mecanismo Lesional:</strong><br>
-                            <span style="color:#475569;">{meta_preset.get('mecanismo', 'Sobrecarga biomecánica o traumatismo.')}</span>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_c3:
-                inhibir_str = ", ".join(miofascial.get("inhibir", [])) if miofascial.get("inhibir") else "Evaluación específica"
-                activar_str = ", ".join(miofascial.get("activar", [])) if miofascial.get("activar") else "Estabilizadores pélvicos"
-                alerta_str = miofascial.get("precaucion_reactiva", "Monitorear tono muscular.")
-                st.markdown(f"""
-                <div class="clinical-card" style="height:100%; border-top: 3px solid #ec4899;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">ESTADO TISULAR</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">🧬 Tensión Ligamentosa</div>
-                    <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
-                        <div style="margin-bottom:8px;">
-                            <strong>Tensión Ligamentosa:</strong><br>
-                            <span style="color:#be185d; font-weight:600;">{crit.get('tejidos_blandos', 'Normal')}</span>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <strong>Músculos a Inhibir / Liberar:</strong><br>
-                            <span style="color:#475569;">{inhibir_str}</span>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <strong>Alerta Reactiva:</strong><br>
-                            <span style="color:#b45309; font-size:0.8rem;">{alerta_str}</span>
-                        </div>
-                        <div>
-                            <strong>Activar / Fortalecer:</strong><br>
-                            <span style="color:#047857; font-weight:600;">{activar_str}</span>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_c4:
-                st.markdown(f"""
-                <div class="clinical-card" style="height:100%; border-top: 3px solid #10b981;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">EVALUACIÓN FUNCIONAL</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0 10px 0;">⚡ Pruebas Funcionales</div>
-                    <div style="font-size:0.83rem; color:#334155; line-height:1.5;">
-                        <div style="margin-bottom:8px;">
-                            <strong>Long-Sitting Test:</strong><br>
-                            <span style="color:#047857; font-weight:600;">{crit.get('long_sitting', 'Neutro')}</span>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <strong>Maléolo en Supino:</strong><br>
-                            <span>{crit.get('maleolo_supino', 'Simétrico')}</span>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <strong>Supino vs Prono:</strong><br>
-                            <span>{crit.get('pierna_supino_prono', 'Sin alteración relativa')}</span>
-                        </div>
-                        <div>
-                            <strong>Spring Test Sacro:</strong><br>
-                            <span style="font-weight:600;">{crit.get('spring_test', 'Negativo')}</span>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            # 2 Columnas para Protocolo de Tratamiento & Corrección Manual
-            st.markdown("##### 🎯 Protocolo de Tratamiento & Corrección Manual:")
-            col_adj1, col_adj2 = st.columns(2)
-
-            with col_adj1:
-                st.markdown(f"""
-                <div class="clinical-card" style="border-left:4px solid #0284c7;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">MANIPULACIÓN ARTICULAR</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🔨 Ajuste HVLA: {ajuste.get('tecnica', 'Side-Posture')}</div>
-                    <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
-                    <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
-                        <p style="margin-bottom:6px;"><strong>Posición del Paciente:</strong> {ajuste.get('posicion_paciente', 'Decúbito lateral')}</p>
-                        <p style="margin-bottom:6px;"><strong>PCP (Punto de Contacto Paciente):</strong> <span style="color:#0284c7; font-weight:600;">{ajuste.get('pcp', 'EIPS')}</span></p>
-                        <p style="margin-bottom:6px;"><strong>PCC (Punto de Contacto Clínico):</strong> {ajuste.get('pcc', 'Pisiforme / Hipotenar')}</p>
-                        <p style="margin-bottom:6px;"><strong>LOD (Línea de Conducción / Vector):</strong> <span style="color:#047857; font-weight:600;">{ajuste.get('linea_correccion', 'P-A')}</span></p>
-                        <p style="margin-bottom:0; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; padding:6px 10px; color:#b91c1c; font-size:0.8rem;">
-                            <strong>⚠️ Precaución Técnica:</strong> {ajuste.get('advertencia', 'Respetar barrera motriz sin rebote.')}
-                        </p>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col_adj2:
-                st.markdown(f"""
-                <div class="clinical-card" style="border-left:4px solid #10b981;">
-                    <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">REEDUCACIÓN NEUROMUSCULAR</div>
-                    <div style="font-size:1.05rem; font-weight:700; color:#0f172a; margin:4px 0;">🧘 Técnica MET: {met.get('nombre', 'MET de Fred Mitchell Sr.')}</div>
-                    <hr style="margin:8px 0; border:0; border-top:1px solid #e2e8f0;" />
-                    <div style="font-size:0.83rem; color:#334155; line-height:1.6;">
-                        <p style="margin-bottom:6px;"><strong>Posición:</strong> {met.get('posicion', 'Decúbito supino/prono')}</p>
-                        <p style="margin-bottom:6px;"><strong>Músculo Motor Clave:</strong> <span style="color:#047857; font-weight:600;">{met.get('musculo_motor', 'Flexores/Extensores')}</span></p>
-                        <p style="margin-bottom:6px;"><strong>Acción Isométrica:</strong> {met.get('accion', 'Contracción resistida al 20-25% por 7-10s.')}</p>
-                        <p style="margin-bottom:0; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:6px; padding:6px 10px; color:#065f46; font-size:0.8rem;">
-                            <strong>Fase Post-Isométrica (Relajación):</strong> {met.get('fase_post', 'Ganancia pasiva hacia nueva barrera motriz.')}
-                        </p>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+            components.html(atlas_html, height=1520, scrolling=False)
 
             # Matriz Comparativa General de Consulta Rápida
             st.markdown("---")
@@ -5638,7 +6249,7 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
                             <td style="padding:9px 12px; color:#10b981;">NEGATIVO (elástico)</td>
                             <td style="padding:9px 12px;">Pisiforme en AIL posterior P-A</td>
                         </tr>
-                        <tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
                             <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Torsión Sacra Posterior</td>
                             <td style="padding:9px 12px;">Oblicuo contralateral (D/I, I/D)</td>
                             <td style="padding:9px 12px;">Nivelada</td>
@@ -5647,6 +6258,66 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
                             <td style="padding:9px 12px;">Inversión supino/prono</td>
                             <td style="padding:9px 12px; color:#ef4444; font-weight:700;">POSITIVO FRANCO (rígido)</td>
                             <td style="padding:9px 12px;">Base sacra rígida P-A intruir</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro en Flexión Bilateral</td>
+                            <td style="padding:9px 12px;">Transverso S2 (Nutación)</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Sulcus bilateral profundo</td>
+                            <td style="padding:9px 12px;">Ápex postero-superior</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px;">Sin cambios</td>
+                            <td style="padding:9px 12px; color:#f59e0b;">Rígido a la extensión</td>
+                            <td style="padding:9px 12px;">Base sacra pull / ápex push PA + SI</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro en Extensión Bilateral</td>
+                            <td style="padding:9px 12px;">Transverso S2 (Contranutación)</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Sulcus superficial bilateral</td>
+                            <td style="padding:9px 12px;">Ápex antero-inferior</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px;">Sin cambios</td>
+                            <td style="padding:9px 12px; color:#ef4444; font-weight:700;">Positivo franco rígido</td>
+                            <td style="padding:9px 12px;">Base sacra línea media PA puro</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro Antero-Inferior (D)</td>
+                            <td style="padding:9px 12px;">Oblicuo / Unilateral</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Sulcus D profundo + Piramidal tenso</td>
+                            <td style="padding:9px 12px;">ILA I superficial</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px; color:#10b981;">Pierna larga funcional D</td>
+                            <td style="padding:9px 12px;">Asimétrico</td>
+                            <td style="padding:9px 12px;">ILA I (ALI) PA + LM (codo pegado)</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0;">
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro Postero-Superior (I)</td>
+                            <td style="padding:9px 12px;">Oblicuo / Unilateral</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Base I superficial (sulcus plano)</td>
+                            <td style="padding:9px 12px;">ILA D profundo</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px; color:#ef4444;">Maléolo alto I</td>
+                            <td style="padding:9px 12px; color:#f59e0b;">Rígido base I</td>
+                            <td style="padding:9px 12px;">Medial a EIPS I PA + ML + cráneo-caudal</td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro en Flexión Unilateral</td>
+                            <td style="padding:9px 12px;">Transverso Unilateral (Inclinado)</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Base profunda homolateral</td>
+                            <td style="padding:9px 12px;">ILA más bajo homolateral</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px;">Sin dismetría / piramidal normal</td>
+                            <td style="padding:9px 12px;">Resistencia homolateral</td>
+                            <td style="padding:9px 12px;">S1-S2 / ILA LM torque hacia arriba</td>
+                        </tr>
+                        <tr>
+                            <td style="padding:9px 12px; font-weight:700; color:#0f172a;">Sacro en Extensión Unilateral</td>
+                            <td style="padding:9px 12px;">Transverso Unilateral</td>
+                            <td style="padding:9px 12px; color:#0284c7;">Base posterior homolateral</td>
+                            <td style="padding:9px 12px;">ILA más craneal homolateral</td>
+                            <td style="padding:9px 12px;">Neutro</td>
+                            <td style="padding:9px 12px;">Sin dismetría / piramidal normal</td>
+                            <td style="padding:9px 12px; color:#ef4444;">Rígido localizado</td>
+                            <td style="padding:9px 12px;">Lateral al ILA (ALI) LM descendente</td>
                         </tr>
                     </tbody>
                 </table>
