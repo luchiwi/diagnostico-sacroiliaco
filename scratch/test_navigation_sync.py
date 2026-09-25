@@ -1,6 +1,6 @@
 """
 scratch/test_navigation_sync.py
-Pruebas automatizadas de sincronización de navegación y parámetros URL (modulo y tab).
+Pruebas automatizadas de sincronización estricta del menú principal con st.query_params.
 """
 
 import sys
@@ -8,119 +8,144 @@ import os
 
 sys.path.insert(0, os.path.abspath("."))
 
-OPCIONES_MODULO_VIS = [
-    "🟢 Módulo A: Visor 3D Anatómico Interactivo 360° (Pre-Ajuste)",
-    "🔵 Módulo B: Diagrama Vectorial de Ajuste y Puntos de Contacto (Post-Evaluación)",
-    "🟣 Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D"
+OPCIONES_MENU_PRINCIPAL = [
+    "1. 📋 Anamnesis y Banderas Rojas",
+    "2. 🔍 Provocación y Palpación",
+    "3. 🦴 Visualización y Cinemática",
+    "4. ⚖️ Juicio Clínico y Exportación"
 ]
 
-MODULO_KEY_TO_IDX = {
-    "a": 0,
-    "modulo_a": 0,
-    "b": 1,
-    "modulo_b": 1,
-    "c": 2,
-    "modulo_c": 2,
-}
 
-
-def calcular_modulo_idx(raw_modulo: str) -> int:
-    return MODULO_KEY_TO_IDX.get(str(raw_modulo).strip().lower(), 0)
-
-
-def calcular_tab_idx(param_tab: str, param_modulo: str) -> int:
-    p_tab = str(param_tab).strip().lower()
-    p_mod = str(param_modulo).strip().lower()
-
-    if p_mod in ("a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
-        return 2  # Pestaña 3: Visualizador
-    elif p_tab in ("1", "anamnesis"):
+def resolver_indice_menu(tab_url: str) -> int:
+    """Calcula dinámicamente el índice del menú principal a partir del parámetro de URL."""
+    if tab_url in OPCIONES_MENU_PRINCIPAL:
+        return OPCIONES_MENU_PRINCIPAL.index(tab_url)
+    elif str(tab_url).strip().lower() in ("1", "anamnesis"):
         return 0
-    elif p_tab in ("2", "exploracion", "palpacion"):
+    elif str(tab_url).strip().lower() in ("2", "exploracion", "palpacion"):
         return 1
-    elif p_tab in ("3", "visualizador", "cinematica"):
+    elif str(tab_url).strip().lower() in ("3", "visualizador", "cinematica", "a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
         return 2
-    elif p_tab in ("4", "juicio", "prescripcion", "exportacion"):
+    elif str(tab_url).strip().lower() in ("4", "juicio", "prescripcion", "exportacion"):
         return 3
-    else:
-        return 0
+    return 0
 
 
-def test_modulo_resolution():
-    print("\n[TEST 1] Verificando resolución de índice de módulo desde URL:")
-    # Módulo C
-    assert calcular_modulo_idx("c") == 2
-    assert calcular_modulo_idx("C") == 2
-    assert calcular_modulo_idx("modulo_c") == 2
-    assert OPCIONES_MODULO_VIS[calcular_modulo_idx("c")].startswith("🟣 Módulo C")
-    print("  -> Módulo C resuelve a índice 2: OK")
+def test_menu_resolution():
+    print("\n[TEST 1] Verificando cálculo dinámico del índice del menú principal:")
+    # Coincidencia exacta de string
+    for idx, opt in enumerate(OPCIONES_MENU_PRINCIPAL):
+        assert resolver_indice_menu(opt) == idx, f"Fallo al resolver {opt}"
+        print(f"  -> Coincidencia exacta opcion {idx + 1} resuelve a indice {idx}: OK")
 
-    # Módulo B
-    assert calcular_modulo_idx("b") == 1
-    assert calcular_modulo_idx("B") == 1
-    assert calcular_modulo_idx("modulo_b") == 1
-    assert OPCIONES_MODULO_VIS[calcular_modulo_idx("b")].startswith("🔵 Módulo B")
-    print("  -> Módulo B resuelve a índice 1: OK")
+    # Mapeos de compatibilidad clínica (slugs, números y submódulos)
+    assert resolver_indice_menu("1") == 0
+    assert resolver_indice_menu("2") == 1
+    assert resolver_indice_menu("3") == 2
+    assert resolver_indice_menu("4") == 3
+    assert resolver_indice_menu("c") == 2
+    assert resolver_indice_menu("modulo_c") == 2
+    assert resolver_indice_menu("a") == 2
+    print("  -> Slugs numéricos y submódulos resuelven a sus páginas correspondientes: OK")
 
-    # Módulo A
-    assert calcular_modulo_idx("a") == 0
-    assert calcular_modulo_idx("A") == 0
-    assert OPCIONES_MODULO_VIS[calcular_modulo_idx("a")].startswith("🟢 Módulo A")
-    print("  -> Módulo A resuelve a índice 0: OK")
-
-    # Inválido o vacío -> fallback a inicio (Módulo A)
-    assert calcular_modulo_idx("") == 0
-    assert calcular_modulo_idx("xyz") == 0
-    assert calcular_modulo_idx("null") == 0
-    assert calcular_modulo_idx(None) == 0
-    print("  -> Valores vacíos o inválidos caen a 0 (inicio por defecto): OK")
+    # Parámetros inválidos o vacíos
+    assert resolver_indice_menu("") == 0
+    assert resolver_indice_menu(None) == 0
+    assert resolver_indice_menu("desconocido") == 0
+    print("  -> Parámetros vacíos o desconocidos resuelven a índice 0 (página inicial): OK")
 
 
-def test_tab_activation_resolution():
-    print("\n[TEST 2] Verificando activación de pestañas principales:")
-    # Si viene modulo=c, debe activar Tab 3 (índice 2)
-    assert calcular_tab_idx(param_tab="", param_modulo="c") == 2
-    assert calcular_tab_idx(param_tab="", param_modulo="a") == 2
-    assert calcular_tab_idx(param_tab="", param_modulo="b") == 2
-    print("  -> Presencia de parámetro modulo activa automáticamente Tab 3 (Visualizador): OK")
+def test_apptest_menu_navigation_lifecycle():
+    print("\n[TEST 2] Verificando ciclo de vida del selector st.radio con Streamlit AppTest:")
+    from streamlit.testing.v1 import AppTest
 
-    # Si viene tab específico sin modulo
-    assert calcular_tab_idx(param_tab="1", param_modulo="") == 0
-    assert calcular_tab_idx(param_tab="2", param_modulo="") == 1
-    assert calcular_tab_idx(param_tab="3", param_modulo="") == 2
-    assert calcular_tab_idx(param_tab="4", param_modulo="") == 3
-    print("  -> Parámetros de pestaña 1, 2, 3, 4 resuelven a índices 0, 1, 2, 3: OK")
+    code = '''
+import streamlit as st
 
-    # Inválido o sin parámetros -> Tab 1 (índice 0)
-    assert calcular_tab_idx(param_tab="99", param_modulo="") == 0
-    assert calcular_tab_idx(param_tab="", param_modulo="") == 0
-    print("  -> Pestaña por defecto es Tab 1 (índice 0): OK")
+OPCIONES_MENU_PRINCIPAL = [
+    "1. 📋 Anamnesis y Banderas Rojas",
+    "2. 🔍 Provocación y Palpación",
+    "3. 🦴 Visualización y Cinemática",
+    "4. ⚖️ Juicio Clínico y Exportación"
+]
 
+# 1. Al inicio de la app, lee el parámetro st.query_params.get("tab") o "modulo"
+tab_url = st.query_params.get("tab") or st.query_params.get("modulo") or ""
 
-def test_roundtrip_url_preservation():
-    print("\n[TEST 3] Verificando compatibilidad con token de sesión en st.query_params:")
-    import streamlit as st
+# 2. Si ese parámetro existe en la URL y coincide con alguna de las opciones del menú de navegación,
+# calcula su índice dinámicamente (index = opciones.index(tab_url)). Si no existe, usa 0.
+index = 0
+if tab_url in OPCIONES_MENU_PRINCIPAL:
+    index = OPCIONES_MENU_PRINCIPAL.index(tab_url)
+elif str(tab_url).strip().lower() in ("1", "anamnesis"):
+    index = 0
+elif str(tab_url).strip().lower() in ("2", "exploracion", "palpacion"):
+    index = 1
+elif str(tab_url).strip().lower() in ("3", "visualizador", "cinematica", "a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
+    index = 2
+elif str(tab_url).strip().lower() in ("4", "juicio", "prescripcion", "exportacion"):
+    index = 3
 
-    # Simular query_params con auth_token y modulo=c
-    st.query_params["auth_token"] = "gAAAAABmock_auth_token_value=="
-    st.query_params["modulo"] = "c"
-    st.query_params["tab"] = "3"
+# 3. Callback para actualizar st.query_params["tab"] = seleccion cada vez que el usuario haga clic en otro módulo
+def _on_menu_principal_change():
+    seleccion = st.session_state.get("nav_menu_principal", OPCIONES_MENU_PRINCIPAL[0])
+    st.query_params["tab"] = seleccion
 
-    assert st.query_params.get("auth_token") == "gAAAAABmock_auth_token_value=="
-    assert st.query_params.get("modulo") == "c"
-    assert st.query_params.get("tab") == "3"
+nav_activa = st.radio(
+    "Menú de Navegación:",
+    options=OPCIONES_MENU_PRINCIPAL,
+    index=index,
+    key="nav_menu_principal",
+    horizontal=True,
+    on_change=_on_menu_principal_change
+)
 
-    # Al cambiar de módulo a 'b'
-    st.query_params["modulo"] = "b"
-    assert st.query_params.get("auth_token") == "gAAAAABmock_auth_token_value==", "auth_token no debe perderse"
-    assert st.query_params.get("modulo") == "b"
+if nav_activa == OPCIONES_MENU_PRINCIPAL[0]:
+    st.markdown("### Página 1: Anamnesis")
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[1]:
+    st.markdown("### Página 2: Exploración")
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
+    st.markdown("### Página 3: Visualización")
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[3]:
+    st.markdown("### Página 4: Juicio Clínico")
+'''
 
-    print("  -> st.query_params preserva auth_token y actualiza modulo sin interferencia: OK")
+    # Caso 1: Inicio por defecto (sin parámetros) -> Página 1
+    at0 = AppTest.from_string(code)
+    at0.run()
+    assert "Página 1" in at0.markdown[0].value
+    print("  -> Inicio limpio carga Página 1 (Anamnesis): OK")
+
+    # Caso 2: Carga directa con tab="3. 🦴 Visualización y Cinemática"
+    at3 = AppTest.from_string(code)
+    at3.query_params["tab"] = OPCIONES_MENU_PRINCIPAL[2]
+    at3.run()
+    assert "Página 3" in at3.markdown[0].value
+    print("  -> Carga con tab exacta de Página 3 carga Página 3 directamente: OK")
+
+    # Caso 3: Carga con modulo="c" (proveniente del visor 3D) -> Resuelve a Página 3
+    at_mod_c = AppTest.from_string(code)
+    at_mod_c.query_params["modulo"] = "c"
+    at_mod_c.run()
+    assert "Página 3" in at_mod_c.markdown[0].value
+    print("  -> Carga con modulo=c resuelve dinámicamente a Página 3: OK")
+
+    # Caso 4: Interacción en UI -> Clic en Página 4 (Juicio Clínico)
+    at0.radio[0].set_value(OPCIONES_MENU_PRINCIPAL[3]).run()
+    assert "Página 4" in at0.markdown[0].value
+    assert at0.query_params.get("tab") == OPCIONES_MENU_PRINCIPAL[3] or at0.query_params.get("tab") == [OPCIONES_MENU_PRINCIPAL[3]]
+    print("  -> Clic en Página 4 actualiza query_params['tab'] síncronamente: OK")
+
+    # Caso 5: Recarga F5 simulada tras haber hecho clic en Página 4
+    at_f5 = AppTest.from_string(code)
+    at_f5.query_params["tab"] = OPCIONES_MENU_PRINCIPAL[3]
+    at_f5.run()
+    assert "Página 4" in at_f5.markdown[0].value
+    print("  -> Recarga F5 con query param preservado permanece exactamente en Página 4: OK")
 
 
 if __name__ == "__main__":
-    print("=== INICIANDO SUITE DE PRUEBAS DE NAVEGACIÓN Y SINCRONIZACIÓN URL ===")
-    test_modulo_resolution()
-    test_tab_activation_resolution()
-    test_roundtrip_url_preservation()
-    print("\n[SUCCESS] TODAS LAS PRUEBAS DE NAVEGACIÓN PASARON EXITOSAMENTE!")
+    print("=== INICIANDO SUITE DE PRUEBAS DE MENÚ PRINCIPAL Y PERSISTENCIA ===")
+    test_menu_resolution()
+    test_apptest_menu_navigation_lifecycle()
+    print("\n[SUCCESS] TODAS LAS PRUEBAS DE MENÚ PRINCIPAL PASARON EXITOSAMENTE!")

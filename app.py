@@ -97,6 +97,34 @@ CUSTOM_CSS = """
         font-weight: 600;
         font-size: 0.95rem;
     }
+
+    /* Main Navigation Bar Styling (st.radio horizontal) */
+    div[data-testid="stRadio"] > div[role="radiogroup"] {
+        gap: 8px;
+        padding: 6px 8px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        border: 1px solid #cbd5e1;
+        margin-bottom: 20px;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: 600;
+        font-size: 0.90rem;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+        border-color: #0284c7;
+        color: #0284c7;
+        background: #f0f9ff;
+    }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
@@ -4482,80 +4510,119 @@ with col_hdr_user:
 
 
 # ==============================================================================
-# PESTAÑAS PRINCIPALES DEL SISTEMA (WORKFLOW CRONOLÓGICO)
+# MENÚ DE NAVEGACIÓN PRINCIPAL DEL SISTEMA (PERSISTENCIA ESTRICTA CON URL)
 # ==============================================================================
 
-tab_anamnesis, tab_exploracion, tab_visualizador, tab_juicio = st.tabs([
+OPCIONES_MENU_PRINCIPAL = [
     "1. 📋 Anamnesis y Banderas Rojas",
     "2. 🔍 Provocación y Palpación",
     "3. 🦴 Visualización y Cinemática",
     "4. ⚖️ Juicio Clínico y Exportación"
-])
+]
 
-# Sincronización de pestañas principales con la URL (tab y modulo)
-target_tab_idx = 0
-param_tab = str(st.query_params.get("tab", "")).strip().lower()
-param_modulo = str(st.query_params.get("modulo", "")).strip().lower()
+# 1. Al inicio de la app, lee el parámetro st.query_params.get("tab") o "modulo"
+tab_url = st.query_params.get("tab") or st.query_params.get("modulo") or ""
 
-if param_modulo in ("a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
-    target_tab_idx = 2  # Pestaña 3: Visualizador y Cinemática
-elif param_tab in ("1", "anamnesis"):
-    target_tab_idx = 0
-elif param_tab in ("2", "exploracion", "palpacion"):
-    target_tab_idx = 1
-elif param_tab in ("3", "visualizador", "cinematica"):
-    target_tab_idx = 2
-elif param_tab in ("4", "juicio", "prescripcion", "exportacion"):
-    target_tab_idx = 3
+# 2. Si ese parámetro existe en la URL y coincide con alguna de las opciones del menú de navegación,
+# calcula su índice dinámicamente (index = opciones.index(tab_url)) para pasárselo al st.radio o selector principal.
+# Si no existe, usa 0.
+index = 0
+if tab_url in OPCIONES_MENU_PRINCIPAL:
+    index = OPCIONES_MENU_PRINCIPAL.index(tab_url)
+elif str(tab_url).strip().lower() in ("1", "anamnesis"):
+    index = 0
+elif str(tab_url).strip().lower() in ("2", "exploracion", "palpacion"):
+    index = 1
+elif str(tab_url).strip().lower() in ("3", "visualizador", "cinematica", "a", "b", "c", "modulo_a", "modulo_b", "modulo_c"):
+    index = 2
+elif str(tab_url).strip().lower() in ("4", "juicio", "prescripcion", "exportacion"):
+    index = 3
 else:
-    target_tab_idx = 0
+    index = 0
 
-components.html(
-    f"""
-    <script>
-    (function() {{
-        const targetIdx = {target_tab_idx};
-        function setupTabs() {{
-            try {{
-                const tabs = window.parent.document.querySelectorAll('button[data-baseweb="tab"]');
-                if (tabs && tabs.length >= 4) {{
-                    if (targetIdx >= 0 && targetIdx < tabs.length) {{
-                        const tabBtn = tabs[targetIdx];
-                        if (tabBtn && tabBtn.getAttribute('aria-selected') !== 'true') {{
-                            tabBtn.click();
-                        }}
-                    }}
-                    tabs.forEach((btn, idx) => {{
-                        if (!btn.dataset.tabSyncAttached) {{
-                            btn.dataset.tabSyncAttached = "true";
-                            btn.addEventListener('click', function() {{
-                                const u = new URL(window.parent.location.href);
-                                u.searchParams.set("tab", (idx + 1).toString());
-                                if (idx !== 2) {{
-                                    u.searchParams.delete("modulo");
-                                }}
-                                window.parent.history.replaceState({{}}, "", u.toString());
-                            }});
-                        }}
-                    }});
-                }}
-            }} catch(e) {{}}
-        }}
-        setTimeout(setupTabs, 60);
-        setTimeout(setupTabs, 200);
-        setTimeout(setupTabs, 500);
-    }})();
-    </script>
-    """,
-    height=0,
-    width=0,
+# 3. Callback para actualizar st.query_params["tab"] = seleccion cada vez que el usuario haga clic en otro módulo
+def _on_menu_principal_change():
+    seleccion = st.session_state.get("nav_menu_principal", OPCIONES_MENU_PRINCIPAL[0])
+    st.query_params["tab"] = seleccion
+
+nav_activa = st.radio(
+    "Menú de Navegación:",
+    options=OPCIONES_MENU_PRINCIPAL,
+    index=index,
+    key="nav_menu_principal",
+    horizontal=True,
+    on_change=_on_menu_principal_change
 )
 
+# ==============================================================================
+# ESTADO CLÍNICO GLOBAL PERSISTENTE (ACCESIBLE EN TODAS LAS PÁGINAS)
+# ==============================================================================
+if "paciente_inst" not in st.session_state:
+    st.session_state["paciente_inst"] = DatosPaciente(
+        identificador="PAC-2026-001",
+        edad=38,
+        sexo="Masculino",
+        lateralidad="Diestro",
+        ocupacion_deporte="Trabajo de oficina (sedente 8h) / Corredor aficionado",
+        tiempo_evolucion=TiempoEvolucion.SUBAGUDA,
+        mecanismo_inicio=MecanismoInicio.INSIDIOSO
+    )
+
+if "banderas_rojas_inst" not in st.session_state:
+    st.session_state["banderas_rojas_inst"] = BanderasRojas(
+        dolor_nocturno=False,
+        compromiso_esfinteres=False,
+        sintomas_constitucionales=False,
+        rigidez_axial_juvenil=False
+    )
+
+if "cluster_inst" not in st.session_state:
+    st.session_state["cluster_inst"] = ClusterLaslett(
+        distraccion=True,
+        compresion=True,
+        thigh_thrust=True,
+        faber=False,
+        gaenslen=False
+    )
+
+if "palpacion_inst" not in st.session_state:
+    st.session_state["palpacion_inst"] = ExamenPalpatorio(
+        lado_restriccion=LadoRestriccion.DERECHO,
+        cresta_iliaca=PosicionNivel.NIVELADA,
+        tuberosidad_isquiatica=PosicionNivel.NIVELADA,
+        eias=HitoOseoPosicion.ALTA,
+        eips=HitoOseoPosicion.BAJA,
+        escalon_pubis=EscalonPubico.NEUTRO,
+        maleolo_supino=MaleoloSupino.CORTO,
+        long_sitting=LongSittingTest.CORTO_SE_ALARGA,
+        surco_sacro=SurcoSacro.NEUTRO,
+        ail=AnguloInferolateral.SIMETRICO,
+        piramidal=EstadoTejidoBlando.NORMOTONICO,
+        ligamento_sacrotuberoso_tenso=True,
+        diametro_transverso="Neutro / Simétrico",
+        es_torsion_sacra=False,
+        spring_test_positivo=True
+    )
+
+if "diagnostico_actual" not in st.session_state:
+    st.session_state["diagnostico_actual"] = inferir_diagnostico(
+        palpacion=st.session_state["palpacion_inst"],
+        banderas_rojas=st.session_state["banderas_rojas_inst"],
+        cluster=st.session_state["cluster_inst"]
+    )
+
+paciente_inst = st.session_state["paciente_inst"]
+banderas_rojas_inst = st.session_state["banderas_rojas_inst"]
+cluster_inst = st.session_state["cluster_inst"]
+interpretacion_laslett, detalle_laslett, badge_laslett = cluster_inst.interpretacion
+palpacion_inst = st.session_state["palpacion_inst"]
+diagnostico_actual = st.session_state["diagnostico_actual"]
+
 
 # ------------------------------------------------------------------------------
-# TAB 1: ANAMNESIS Y CRITERIOS DE EXCLUSIÓN (RED FLAGS)
+# PÁGINA 1: ANAMNESIS Y CRITERIOS DE EXCLUSIÓN (RED FLAGS)
 # ------------------------------------------------------------------------------
-with tab_anamnesis:
+if nav_activa == OPCIONES_MENU_PRINCIPAL[0]:
     st.markdown("### 👤 Datos Demográficos y Cronología del Dolor")
     
     col_dem1, col_dem2, col_dem3 = st.columns([2, 1, 1])
@@ -4640,12 +4707,20 @@ with tab_anamnesis:
         tiempo_evolucion=tiempo_evolucion_sel,
         mecanismo_inicio=mecanismo_inicio_sel
     )
+    st.session_state["paciente_inst"] = paciente_inst
+    st.session_state["banderas_rojas_inst"] = banderas_rojas_inst
+    st.session_state["diagnostico_actual"] = inferir_diagnostico(
+        palpacion=st.session_state["palpacion_inst"],
+        banderas_rojas=banderas_rojas_inst,
+        cluster=st.session_state["cluster_inst"]
+    )
+    diagnostico_actual = st.session_state["diagnostico_actual"]
 
 
 # ------------------------------------------------------------------------------
-# TAB 2: EXPLORACIÓN FÍSICA Y CLÚSTER DE PROVOCACIÓN
+# PÁGINA 2: EXPLORACIÓN FÍSICA Y CLÚSTER DE PROVOCACIÓN
 # ------------------------------------------------------------------------------
-with tab_exploracion:
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[1]:
     st.markdown("### 🎯 Batería de Dolor Articular (Clúster de Laslett)")
     st.caption("Gold Standard clínico para descartar o confirmar compromiso intraarticular sacroilíaco.")
 
@@ -4822,22 +4897,20 @@ with tab_exploracion:
         es_torsion_sacra=es_torsion_eval,
         spring_test_positivo=spring_test_check
     )
+    st.session_state["cluster_inst"] = cluster_inst
+    st.session_state["palpacion_inst"] = palpacion_inst
+    st.session_state["diagnostico_actual"] = inferir_diagnostico(
+        palpacion=palpacion_inst,
+        banderas_rojas=st.session_state["banderas_rojas_inst"],
+        cluster=cluster_inst
+    )
+    diagnostico_actual = st.session_state["diagnostico_actual"]
 
 
 # ------------------------------------------------------------------------------
-# INFERENCIA BIOMECÁNICA (EJECUCIÓN DETERMINISTA)
+# PÁGINA 3: VISUALIZACIÓN DINÁMICA DE CINEMÁTICA PELVIANA
 # ------------------------------------------------------------------------------
-diagnostico_actual = inferir_diagnostico(
-    palpacion=palpacion_inst,
-    banderas_rojas=banderas_rojas_inst,
-    cluster=cluster_inst
-)
-
-
-# ------------------------------------------------------------------------------
-# TAB 3: VISUALIZACIÓN DINÁMICA DE CINEMÁTICA PELVIANA
-# ------------------------------------------------------------------------------
-with tab_visualizador:
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
     st.markdown("### 🦴 Representación Visual Pélvica Interactiva y Vectorial")
     st.caption("Simulador anatómico dinámico pre-ajuste y cálculo vectorial de alta visibilidad para el protocolo quiropráctico post-evaluación.")
 
@@ -4846,51 +4919,75 @@ with tab_visualizador:
         "🔵 Módulo B: Diagrama Vectorial de Ajuste y Puntos de Contacto (Post-Evaluación)",
         "🟣 Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D"
     ]
-    MODULO_KEY_TO_IDX = {
+    MAPA_MODULOS = {
+        # Módulo A
         "a": 0,
         "modulo_a": 0,
+        "modulo-a": 0,
+        "modulo a": 0,
+        "0": 0,
+        OPCIONES_MODULO_VIS[0].lower(): 0,
+        # Módulo B
         "b": 1,
         "modulo_b": 1,
+        "modulo-b": 1,
+        "modulo b": 1,
+        "1": 1,
+        OPCIONES_MODULO_VIS[1].lower(): 1,
+        # Módulo C
         "c": 2,
         "modulo_c": 2,
+        "modulo-c": 2,
+        "modulo c": 2,
+        "atlas": 2,
+        "2": 2,
+        OPCIONES_MODULO_VIS[2].lower(): 2,
     }
 
-    # Leer parámetro de la URL para definir el índice inicial (F5 o navegación directa)
-    raw_modulo = str(st.query_params.get("modulo", "")).strip().lower()
-    modulo_idx_init = MODULO_KEY_TO_IDX.get(raw_modulo, 0)
+    # 1. Leer st.query_params.get('tab') (con fallback a modulo)
+    raw_tab = str(st.query_params.get("tab") or st.query_params.get("modulo") or "").strip().lower()
 
-    # Sincronizar clave en session_state si la URL lo especifica y la clave aún no está fijada o difiere
-    if "selector_modulo_cinematica" not in st.session_state:
-        st.session_state["selector_modulo_cinematica"] = OPCIONES_MODULO_VIS[modulo_idx_init]
-    elif raw_modulo in MODULO_KEY_TO_IDX and st.session_state.get("selector_modulo_cinematica") != OPCIONES_MODULO_VIS[modulo_idx_init]:
-        st.session_state["selector_modulo_cinematica"] = OPCIONES_MODULO_VIS[modulo_idx_init]
+    # 2. Mapear ese valor de la URL al índice exacto del selector
+    idx_encontrado = 0
+    if raw_tab in MAPA_MODULOS:
+        idx_encontrado = MAPA_MODULOS[raw_tab]
+    elif "módulo c" in raw_tab or "modulo c" in raw_tab or "atlas" in raw_tab or "galería" in raw_tab:
+        idx_encontrado = 2
+    elif "módulo b" in raw_tab or "modulo b" in raw_tab or "vectorial" in raw_tab:
+        idx_encontrado = 1
+    elif "módulo a" in raw_tab or "modulo a" in raw_tab or "3d" in raw_tab:
+        idx_encontrado = 0
 
-    def _sync_modulo_query_param():
-        sel = st.session_state.get("selector_modulo_cinematica", "")
+    KEY_MODULO = "selector_modulo_cinematica"
+
+    # 3. Inicializar st.session_state con esa opción si no existe o si la URL difiere
+    if KEY_MODULO not in st.session_state:
+        st.session_state[KEY_MODULO] = OPCIONES_MODULO_VIS[idx_encontrado]
+    elif raw_tab in MAPA_MODULOS and st.session_state.get(KEY_MODULO) != OPCIONES_MODULO_VIS[idx_encontrado]:
+        st.session_state[KEY_MODULO] = OPCIONES_MODULO_VIS[idx_encontrado]
+
+    # 4. Callback on_change para actualizar st.query_params['tab'] y ['modulo'] de forma síncrona
+    def _sync_modulo_tab():
+        sel = st.session_state.get(KEY_MODULO, "")
         if "Módulo A" in sel:
-            st.query_params["modulo"] = "a"
+            val = "a"
         elif "Módulo B" in sel:
-            st.query_params["modulo"] = "b"
+            val = "b"
         elif "Módulo C" in sel:
-            st.query_params["modulo"] = "c"
-        st.query_params["tab"] = "3"
+            val = "c"
+        else:
+            val = "a"
+        st.query_params["tab"] = val
+        st.query_params["modulo"] = val
 
+    # 5. Selector st.radio sincronizado
     sel_modulo_vis = st.radio(
         "Perspectiva de Visualización Biomecánica:",
         options=OPCIONES_MODULO_VIS,
-        index=modulo_idx_init,
+        key=KEY_MODULO,
         horizontal=True,
-        key="selector_modulo_cinematica",
-        on_change=_sync_modulo_query_param
+        on_change=_sync_modulo_tab
     )
-
-    # Sincronización inmediata con query_params
-    if "Módulo A" in sel_modulo_vis and st.query_params.get("modulo") != "a":
-        st.query_params["modulo"] = "a"
-    elif "Módulo B" in sel_modulo_vis and st.query_params.get("modulo") != "b":
-        st.query_params["modulo"] = "b"
-    elif "Módulo C" in sel_modulo_vis and st.query_params.get("modulo") != "c":
-        st.query_params["modulo"] = "c"
 
     if "Módulo A" in sel_modulo_vis:
         col_view_info, col_view_canvas = st.columns([1, 2.5])
@@ -5389,9 +5486,9 @@ with tab_visualizador:
 
 
 # ------------------------------------------------------------------------------
-# TAB 4: JUICIO CLÍNICO, PRESCRIPCIÓN Y EXPORTACIÓN EN PDF
+# PÁGINA 4: JUICIO CLÍNICO, PRESCRIPCIÓN Y EXPORTACIÓN EN PDF
 # ------------------------------------------------------------------------------
-with tab_juicio:
+elif nav_activa == OPCIONES_MENU_PRINCIPAL[3]:
     st.markdown("### ⚖️ Juicio Diagnóstico Biomecánico y Prescripción Terapéutica")
 
     if banderas_rojas_inst.hay_bandera_roja:
