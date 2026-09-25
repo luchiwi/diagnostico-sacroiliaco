@@ -98,80 +98,33 @@ CUSTOM_CSS = """
         font-size: 0.95rem;
     }
 
-    /* Selectores Horizontales (st.radio tipo pastilla / cápsula) */
-    div[data-testid="stRadio"] > label,
-    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] p,
-    div[data-testid="stRadio"] label[data-testid="stWidgetLabel"] span {
-        color: #0F172A !important;
-        font-weight: 600 !important;
-        font-size: 0.95rem;
+    /* 1. Fondo oscuro profesional para el contenedor de pestañas */
+    div[role="radiogroup"] {
+        background-color: #0F172A !important;
+        border: 1px solid #334155 !important;
+        border-radius: 9999px !important;
+        padding: 6px 12px !important;
+        gap: 12px !important;
     }
 
-    div[data-testid="stRadio"] > div[role="radiogroup"] {
-        gap: 8px;
-        padding: 6px 8px;
-        background: #f1f5f9;
-        border-radius: 12px;
-        border: 1px solid #cbd5e1;
-        margin-bottom: 20px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+    div[role="radiogroup"] label {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
-    /* Pastillas y opciones del st.radio horizontal en contenedores claros */
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label {
-        background: #ffffff !important;
-        border-radius: 8px;
-        padding: 8px 16px;
-        font-weight: 600 !important;
-        font-size: 0.90rem;
-        border: 1px solid #cbd5e1;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: #0F172A !important;
+    /* 2. Forzar texto blanco legible en todos los elementos hijos (labels, spans, párrafos) */
+    div[role="radiogroup"] * {
+        color: #E2E8F0 !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
     }
 
-    /* Fuerza color oscuro legible en textos internos (p, span, div, markdown) */
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label span,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label div,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label div[data-testid="stMarkdownContainer"] p {
-        color: #0F172A !important;
-        font-weight: 600 !important;
-    }
-
-    /* Efecto hover */
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
-        border-color: #0284c7 !important;
-        background: #f0f9ff !important;
-    }
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover span {
-        color: #0284c7 !important;
-    }
-
-    /* Opción activa / seleccionada: Alto contraste con fondo azul primario y texto blanco nítido */
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) {
-        background: #0284c7 !important;
-        border-color: #0369a1 !important;
-        box-shadow: 0 2px 4px rgba(2, 132, 199, 0.25) !important;
-    }
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) span,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) div,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked) div[data-testid="stMarkdownContainer"] p {
-        color: #ffffff !important;
+    /* 3. Destacar la opción seleccionada */
+    div[role="radiogroup"] label[data-checked="true"] *,
+    div[role="radiogroup"] label:has(input:checked) * {
+        color: #38BDF8 !important;
         font-weight: 700 !important;
-    }
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked):hover {
-        background: #0369a1 !important;
-        border-color: #075985 !important;
-    }
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked):hover p,
-    div[data-testid="stRadio"] > div[role="radiogroup"] > label:has(input:checked):hover span {
-        color: #ffffff !important;
     }
 </style>
 """
