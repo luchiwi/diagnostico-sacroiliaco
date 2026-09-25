@@ -1307,10 +1307,11 @@ def generar_visor_3d_pelvis(
                         <div class="toolbar-control-group">
                             <span class="toolbar-control-label">CAT:</span>
                             <select id="atlas-category-select" class="v3d-select" onchange="onCategorySelectChange(this.value)">
-                                <option value="sagital">Rotacionales Sagitales</option>
-                                <option value="vertical">Cizallamientos Verticales</option>
-                                <option value="transversal">Transversales (Flares)</option>
-                                <option value="sacro">Torsiones Sacras</option>
+                                <option value="sagital">Disfunciones Sagitales (Rotacionales)</option>
+                                <option value="vertical">Disfunciones Verticales (Slips)</option>
+                                <option value="transversal">Disfunciones Transversales (Flares)</option>
+                                <option value="pubica">Disfunciones Púbicas</option>
+                                <option value="sacro">Disfunciones Sacras</option>
                             </select>
                         </div>
                         <!-- Selector de Disfunción Específica -->
@@ -1332,23 +1333,32 @@ def generar_visor_3d_pelvis(
             <div class="preset-subtoolbar">
                 <div class="preset-category-group">
                     <span class="preset-cat-label">SAGITAL:</span>
-                    <button id="btn-preset-pi" class="v3d-btn-preset {'active' if preset_init == 'pi' else ''}" onclick="applyAtlasPreset('pi')">PI (Retroversión)</button>
-                    <button id="btn-preset-as" class="v3d-btn-preset {'active' if preset_init == 'as' else ''}" onclick="applyAtlasPreset('as')">AS (Anteversión)</button>
+                    <button id="btn-preset-pi" class="v3d-btn-preset {'active' if preset_init == 'pi' else ''}" onclick="applyAtlasPreset('pi')">PI</button>
+                    <button id="btn-preset-as" class="v3d-btn-preset {'active' if preset_init == 'as' else ''}" onclick="applyAtlasPreset('as')">AS</button>
                 </div>
                 <div class="preset-category-group">
                     <span class="preset-cat-label">VERTICAL:</span>
-                    <button id="btn-preset-up" class="v3d-btn-preset {'active' if preset_init == 'up' else ''}" onclick="applyAtlasPreset('up')">Upslip (Craneal)</button>
-                    <button id="btn-preset-down" class="v3d-btn-preset {'active' if preset_init == 'down' else ''}" onclick="applyAtlasPreset('down')">Downslip (Caudal)</button>
+                    <button id="btn-preset-up" class="v3d-btn-preset {'active' if preset_init == 'up' else ''}" onclick="applyAtlasPreset('up')">Upslip</button>
+                    <button id="btn-preset-down" class="v3d-btn-preset {'active' if preset_init == 'down' else ''}" onclick="applyAtlasPreset('down')">Downslip</button>
                 </div>
                 <div class="preset-category-group">
                     <span class="preset-cat-label">FLARES:</span>
-                    <button id="btn-preset-outflare" class="v3d-btn-preset {'active' if preset_init == 'outflare' else ''}" onclick="applyAtlasPreset('outflare')">Outflare (EX)</button>
-                    <button id="btn-preset-inflare" class="v3d-btn-preset {'active' if preset_init == 'inflare' else ''}" onclick="applyAtlasPreset('inflare')">Inflare (IN)</button>
+                    <button id="btn-preset-outflare" class="v3d-btn-preset {'active' if preset_init == 'outflare' else ''}" onclick="applyAtlasPreset('outflare')">Outflare</button>
+                    <button id="btn-preset-inflare" class="v3d-btn-preset {'active' if preset_init == 'inflare' else ''}" onclick="applyAtlasPreset('inflare')">Inflare</button>
+                </div>
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">PUBIS:</span>
+                    <button id="btn-preset-pubis_up" class="v3d-btn-preset {'active' if preset_init == 'pubis_up' else ''}" onclick="applyAtlasPreset('pubis_up')">Pubis Sup.</button>
+                    <button id="btn-preset-pubis_down" class="v3d-btn-preset {'active' if preset_init == 'pubis_down' else ''}" onclick="applyAtlasPreset('pubis_down')">Pubis Inf.</button>
                 </div>
                 <div class="preset-category-group">
                     <span class="preset-cat-label">SACRO:</span>
-                    <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Torsión Ant.</button>
-                    <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Torsión Post.</button>
+                    <button id="btn-preset-sacro_flexion" class="v3d-btn-preset {'active' if preset_init == 'sacro_flexion' else ''}" onclick="applyAtlasPreset('sacro_flexion')">Flex. Bilat.</button>
+                    <button id="btn-preset-sacro_extension" class="v3d-btn-preset {'active' if preset_init == 'sacro_extension' else ''}" onclick="applyAtlasPreset('sacro_extension')">Ext. Bilat.</button>
+                    <button id="btn-preset-sacro_ai_d" class="v3d-btn-preset {'active' if preset_init == 'sacro_ai_d' else ''}" onclick="applyAtlasPreset('sacro_ai_d')">Sacro Ant. D</button>
+                    <button id="btn-preset-sacro_ps_i" class="v3d-btn-preset {'active' if preset_init == 'sacro_ps_i' else ''}" onclick="applyAtlasPreset('sacro_ps_i')">Sacro Post. I</button>
+                    <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Tors. Ant.</button>
+                    <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Tors. Post.</button>
                 </div>
             </div>"""
         if mostrar_ficha_didactica:
@@ -2987,36 +2997,113 @@ def generar_visor_3d_pelvis(
                     mechanism: "Flexión de tronco brusca con carga excéntrica inesperada o traumatismo en caída que atrapa el sacro en retroversión no fisiológica.",
                     palpation: "• Surco Sacro: Plano, superficial y doloroso (base sacra posteriorizada hacia atrás)\\n• Ángulo Inferolateral (AIL): Anterior y superior contralateral a la base posteriorizada\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera, sin juego elástico, rectificación lumbar)\\n• Test Supino/Prono: Inversión (pierna corta en supino pasa a ser larga en prono)\\n• Tensión miofascial: Severa hipertonía de multífidos L5-S1 y piramidal",
                     correction: "• Ajuste HVLA: Decúbito lateral con la base sacra posteriorizada arriba. Cadera flexionada >90°. PCP: Eminencia hipotenar directamente en el sulcus/base sacra rígida. LOD: P-A con ligero vector M-L para intruir la base fija hacia anterior.\\n• MET (Mitchell): Decúbito lateral sobre el lado opuesto al eje oblicuo (tronco rotado hacia atrás). Pierna superior extendida colgando detrás de la camilla. Contracción isométrica de extensión de cadera al 25% por 7-10s."
+                }},
+                "pubis_up": {{
+                    title: "Pubis Ascendido (Cizallamiento Superior)",
+                    category: "Disfunción Púbica de Cizallamiento Vertical",
+                    listing: "Mitchell: Cizallamiento Púbico Superior | Osteopatía: Pubis Alto",
+                    mechanism: "Sobrecarga o espasmo unilateral del recto abdominal, tracción asimétrica por traumatismo frontal o patada en vacío.",
+                    palpation: "• Sínfisis Púbica: Escalón superior palpable en el tubérculo púbico homolateral\\n• Sensibilidad: Dolor exquisito local a la compresión púbica\\n• Músculos: Tensión dolorosa en recto anterior del abdomen e inserción de piramidal del abdomen\\n• Movilidad: Restricción del deslizamiento inferior fisiológico",
+                    correction: "• Ajuste HVLA: Paciente en decúbito supino con miembro inferior en abducción y rotación externa. Contacto directo sobre borde superior del pubis con eminencia tenar. LOD: De cefálico a caudal (C-C) simultáneo a espiración forzada.\\n• MET (Mitchell): Paciente en decúbito supino, cadera en extensión colgada fuera de la camilla. Contracción isométrica de flexores de cadera/aductores al 20% por 7-10s."
+                }},
+                "pubis_down": {{
+                    title: "Pubis Descendido (Cizallamiento Inferior)",
+                    category: "Disfunción Púbica de Cizallamiento Vertical",
+                    listing: "Mitchell: Cizallamiento Púbico Inferior | Osteopatía: Pubis Bajo",
+                    mechanism: "Tracción brusca de la musculatura aductora (microtrauma repetido en futbolistas/corredores), patinazos con abducción violenta.",
+                    palpation: "• Sínfisis Púbica: Escalón inferior palpable en el tubérculo púbico homolateral\\n• Aductores: Espasmo hipertónico severo en gracilis y aductor mediano\\n• Long-Sitting: Sin alteración franca de longitud relativa de extremidades\\n• Dolor inguinal: Irradiación hacia cara medial del muslo",
+                    correction: "• Ajuste HVLA: Decúbito supino con cadera y rodilla homolateral flexionadas al pecho. Contacto en cara inferior de la sínfisis/rama isquiopúbica. LOD: De caudal a craneal (I-S).\\n• MET (Mitchell): Paciente en decúbito supino, rodillas flexionadas y pies apoyados. Separación resistida de rodillas (abducción isométrica) seguida de técnica de 'escopeta' para sínfisis."
+                }},
+                "sacro_flexion": {{
+                    title: "Sacro en Flexión Bilateral (Nutación Bilateral)",
+                    category: "Disfunción Sacroilíaca en Plano Sagital",
+                    listing: "Mitchell / Osteopatía: Sacro en Flexión Bilateral (Nutación Bilateral)",
+                    mechanism: "Sobrecarga en flexión lumbar prolongada, esfuerzo de carga en inclinación anterior forzada o traumatismo posterior.",
+                    palpation: "• Surco Sacro: Bilateralmente profundo y doloroso a la palpación profunda\\n• Ápex Sacro: Postero-superior prominente hacia atrás\\n• Ángulos Inferolaterales (AIL): Anteriores y difíciles de palpar\\n• Spring Test: NEGATIVO (retiene elasticidad y aumento de lordosis lumbar)\\n• Maléolos: Nivelados simétricos",
+                    correction: "• Ajuste HVLA: Paciente en decúbito prono. PCP: Base sacra línea media bilateral con talón de la mano. LOD: Tracción/empuje de ápex hacia caudal o base sacra P-A hacia desnutación en espiración.\\n• MET (Mitchell): Paciente en prono o cuadrupedia. Esfuerzo espiratorio profundo mientras el clínico resiste la contranutación."
+                }},
+                "sacro_extension": {{
+                    title: "Sacro en Extensión Bilateral (Contranutación Bilateral)",
+                    category: "Disfunción Sacroilíaca en Plano Sagital",
+                    listing: "Mitchell / Osteopatía: Sacro en Extensión Bilateral (Contranutación Bilateral)",
+                    mechanism: "Caída en sedestación directa sobre el sacro/cóccix, hiperextensión lumbar violenta o rectificación lumbosacra rígida.",
+                    palpation: "• Surco Sacro: Superficial, plano y prominente hacia posterior bilateralmente\\n• Ápex Sacro: Antero-inferior hundido hacia la pelvis menor\\n• Spring Test: POSITIVO FRANCO (resistencia rígida 'en tabla de madera')\\n• Lordosis lumbar: Rectificada y aplanada\\n• Tejidos: Hipertonía lumbar baja bilateral",
+                    correction: "• Ajuste HVLA: Paciente en decúbito prono con cojín bajo el abdomen. PCP: Base sacra en la línea media con eminencia hipotenar reforzada. LOD: P-A puro y enérgico al final de la inspiración para inducir nutación fisiológica.\\n• MET (Mitchell): Paciente en prono apoyado sobre codos (posición de esfinge). Inspiración profunda mantenida empujando el sacro hacia anterior."
+                }},
+                "sacro_ai_d": {{
+                    title: "Sacro Anterior Derecho (Antero-Inferior D)",
+                    category: "Disfunción Sacra Unilateral / Oblicua",
+                    listing: "Osteopatía: Sacro Antero-Inferior Derecho (Falsa Pierna Larga)",
+                    mechanism: "Sobrecarga rotacional asimétrica con torsión pélvica, espasmo defensivo unilateral del piramidal derecho.",
+                    palpation: "• Surco Sacro Derecho: Profundo y adelantado hacia anterior\\n• Ángulo Inferolateral (ILA) Izquierdo: Prominente, superficial y descendido\\n• Piramidal: Espasmo hipertónico severo en piramidal derecho\\n• Maléolos: Pierna derecha funcionalmente larga\\n• Spring Test: Asimétrico",
+                    correction: "• Ajuste HVLA: Decúbito lateral sobre lado derecho. PCP: ILA izquierdo (lado superficial). LOD: Posterior a Anterior (P-A) con vector Lateral a Medial (L-M) y codo pegado al cuerpo.\\n• MET (Mitchell): Posición de Sims lateral. Contracción isométrica de rotadores externos al 20% por 7-10s."
+                }},
+                "sacro_ai_i": {{
+                    title: "Sacro Anterior Izquierdo (Antero-Inferior I)",
+                    category: "Disfunción Sacra Unilateral / Oblicua",
+                    listing: "Osteopatía: Sacro Antero-Inferior Izquierdo",
+                    mechanism: "Microtrauma repetitivo en rotación pélvica izquierda con carga asimétrica, hipertonía del piramidal izquierdo.",
+                    palpation: "• Surco Sacro Izquierdo: Profundo y anteriorizado\\n• ILA Derecho: Prominente hacia posterior y más caudal\\n• Piramidal: Banda tensa exquisitamente reactiva en piramidal izquierdo\\n• Maléolos: Falsa pierna larga izquierda",
+                    correction: "• Ajuste HVLA: Decúbito lateral sobre lado izquierdo. PCP: ILA derecho posterior. LOD: P-A + L-M con torque de desrotación sacra.\\n• MET (Mitchell): Decúbito lateral Sims. Contracción resistida de abductores/rotadores al 20% por 7-10s."
+                }},
+                "sacro_ps_d": {{
+                    title: "Sacro Posterior Derecho (Postero-Superior D)",
+                    category: "Disfunción Sacra Unilateral / Oblicua",
+                    listing: "Osteopatía: Sacro Postero-Superior Derecho",
+                    mechanism: "Impacto axial en flexión con hemipelvis derecha bloqueada en contranutación unilateral.",
+                    palpation: "• Surco Sacro Derecho: Superficial, plano y bloqueado hacia posterior\\n• ILA Izquierdo: Profundo y adelantado hacia anterior\\n• Maléolos: Maléolo derecho más alto en decúbito supino\\n• Spring Test: Rígido positivo sobre la base sacra derecha",
+                    correction: "• Ajuste HVLA: Decúbito lateral con base derecha hacia arriba. PCP: Medial a la EIPS derecha sobre base sacra. LOD: P-A + M-L + de craneal a caudal para desimpactar la carilla sacra.\\n• MET (Mitchell): Paciente en decúbito lateral sobre lado izquierdo, extensión isométrica de cadera derecha al 20%."
+                }},
+                "sacro_ps_i": {{
+                    title: "Sacro Posterior Izquierdo (Postero-Superior I)",
+                    category: "Disfunción Sacra Unilateral / Oblicua",
+                    listing: "Osteopatía: Sacro Postero-Superior Izquierdo",
+                    mechanism: "Atrapamiento de la hemibase sacra izquierda en contra-nutación tras esfuerzo asimétrico en flexión de tronco.",
+                    palpation: "• Surco Sacro Izquierdo: Superficial, plano y doloroso a la palpación local\\n• ILA Derecho: Hundido hacia anterior y superior\\n• Maléolos: Maléolo izquierdo más alto en supino\\n• Spring Test: Bloqueo rígido franco en base sacra izquierda",
+                    correction: "• Ajuste HVLA: Decúbito lateral con hemibase izquierda hacia arriba. PCP: Borde medial de EIPS izquierda en surco sacro. LOD: P-A + M-L de craneal a caudal.\\n• MET (Mitchell): Decúbito lateral derecho. Extensión isométrica de cadera izquierda al 25% por 7-10s."
                 }}
             }};
 
             const ATLAS_CATEGORIES = {{
                 "sagital": {{
-                    name: "Rotacionales Sagitales",
+                    name: "Disfunciones Sagitales (Rotacionales)",
                     presets: [
-                        {{ key: "pi", name: "Ilíaco Posterior (PI) - Retroversión" }},
-                        {{ key: "as", name: "Ilíaco Anterior (AS) - Anteversión" }}
+                        {{ key: "pi", name: "Ilíaco Posterior (PI / Retroversión)" }},
+                        {{ key: "as", name: "Ilíaco Anterior (AS / Anteversión)" }}
                     ]
                 }},
                 "vertical": {{
-                    name: "Cizallamientos Verticales",
+                    name: "Disfunciones Verticales (Cizallamientos / Slips)",
                     presets: [
-                        {{ key: "up", name: "Ilíaco Ascendido (Upslip) - Craneal" }},
-                        {{ key: "down", name: "Ilíaco Descendido (Downslip) - Caudal" }}
+                        {{ key: "up", name: "Ilíaco Ascendido (Upslip Craneal)" }},
+                        {{ key: "down", name: "Ilíaco Descendido (Downslip Caudal)" }}
                     ]
                 }},
                 "transversal": {{
-                    name: "Transversales (Flares)",
+                    name: "Disfunciones Transversales (Flares)",
                     presets: [
-                        {{ key: "outflare", name: "Ilíaco Outflare (EX) - Rot. Externa" }},
-                        {{ key: "inflare", name: "Ilíaco Inflare (IN) - Rot. Interna" }}
+                        {{ key: "outflare", name: "Outflare (Rotación Externa / EX)" }},
+                        {{ key: "inflare", name: "Inflare (Rotación Interna / IN)" }}
+                    ]
+                }},
+                "pubica": {{
+                    name: "Disfunciones Púbicas",
+                    presets: [
+                        {{ key: "pubis_up", name: "Pubis Ascendido (Cizallamiento Superior)" }},
+                        {{ key: "pubis_down", name: "Pubis Descendido (Cizallamiento Inferior)" }}
                     ]
                 }},
                 "sacro": {{
-                    name: "Torsiones Sacras",
+                    name: "Disfunciones Sacras",
                     presets: [
-                        {{ key: "torsion_ant", name: "Torsión Sacra Anterior (D/D, I/I)" }},
-                        {{ key: "torsion_post", name: "Torsión Sacra Posterior (D/I, I/D)" }}
+                        {{ key: "sacro_flexion", name: "Sacro en Flexión Bilateral" }},
+                        {{ key: "sacro_extension", name: "Sacro en Extensión Bilateral" }},
+                        {{ key: "sacro_ai_d", name: "Sacro Anterior Derecho" }},
+                        {{ key: "sacro_ai_i", name: "Sacro Anterior Izquierdo" }},
+                        {{ key: "sacro_ps_d", name: "Sacro Posterior Derecho" }},
+                        {{ key: "sacro_ps_i", name: "Sacro Posterior Izquierdo" }},
+                        {{ key: "torsion_ant", name: "Torsión Sacra Anterior (R/R o L/L)" }},
+                        {{ key: "torsion_post", name: "Torsión Sacra Posterior (R/L o L/R)" }}
                     ]
                 }}
             }};
@@ -3073,6 +3160,16 @@ def generar_visor_3d_pelvis(
                 const btnI = document.getElementById('side-btn-i');
                 if (btnD) btnD.classList.toggle('active', isRight);
                 if (btnI) btnI.classList.toggle('active', !isRight);
+
+                if (currentActivePreset === 'sacro_ai_d' && !isRight) {{
+                    currentActivePreset = 'sacro_ai_i';
+                }} else if (currentActivePreset === 'sacro_ai_i' && isRight) {{
+                    currentActivePreset = 'sacro_ai_d';
+                }} else if (currentActivePreset === 'sacro_ps_d' && !isRight) {{
+                    currentActivePreset = 'sacro_ps_i';
+                }} else if (currentActivePreset === 'sacro_ps_i' && isRight) {{
+                    currentActivePreset = 'sacro_ps_d';
+                }}
 
                 applyAtlasPreset(currentActivePreset);
             }}
@@ -3195,8 +3292,68 @@ def generar_visor_3d_pelvis(
                         targetRotYLeft = -0.06;
                     }}
                     hudInfo.innerHTML = `<span>⚡ <strong>Inflare (Rotación Interna) [${{currentPatientSide}}]:</strong> EIAS medializada y cerrada (distancia al ombligo disminuida), EIPS lateralizada.</span>`;
+                }} else if (presetKey === 'pubis_up') {{
+                    statusBadge.textContent = `⚡ DEMO: Pubis Ascendido - ${{currentPatientSide}}`;
+                    if (isRight) {{
+                        targetTransYRight = 0.04;
+                        targetRotRight = -0.02;
+                    }} else {{
+                        targetTransYLeft = 0.04;
+                        targetRotLeft = -0.02;
+                    }}
+                    hudInfo.innerHTML = `<span>⚡ <strong>Pubis Ascendido [${{currentPatientSide}}]:</strong> Cizallamiento superior de la sínfisis púbica con escalón palpable superior.</span>`;
+                }} else if (presetKey === 'pubis_down') {{
+                    statusBadge.textContent = `⚡ DEMO: Pubis Descendido - ${{currentPatientSide}}`;
+                    if (isRight) {{
+                        targetTransYRight = -0.04;
+                        targetRotRight = 0.02;
+                    }} else {{
+                        targetTransYLeft = -0.04;
+                        targetRotLeft = 0.02;
+                    }}
+                    hudInfo.innerHTML = `<span>⚡ <strong>Pubis Descendido [${{currentPatientSide}}]:</strong> Cizallamiento inferior de la sínfisis púbica con escalón inferior y espasmo de aductores.</span>`;
+                }} else if (presetKey === 'sacro_flexion') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro en Flexión Bilateral (Nutación)`;
+                    targetSacrumPosZ = -0.035;
+                    targetSacrumRotY = 0.0;
+                    targetSacrumRotZ = 0.0;
+                    targetRotLeft = -0.015;
+                    targetRotRight = -0.015;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Flexión Bilateral:</strong> Nutación sacra bilateral. Ambas bases sacras profundas en el surco, ápex postero-superior.</span>`;
+                }} else if (presetKey === 'sacro_extension') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro en Extensión Bilateral (Contranutación)`;
+                    targetSacrumPosZ = 0.035;
+                    targetSacrumRotY = 0.0;
+                    targetSacrumRotZ = 0.0;
+                    targetRotLeft = 0.015;
+                    targetRotRight = 0.015;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Extensión Bilateral:</strong> Contranutación bilateral. Bases sacras superficiales y prominentes, Spring test francamente rígido (+).</span>`;
+                }} else if (presetKey === 'sacro_ai_d') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Derecho (Antero-Inferior D)`;
+                    targetSacrumRotY = 0.04;
+                    targetSacrumRotZ = -0.025;
+                    targetSacrumPosZ = -0.02;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Derecho:</strong> Hemibase sacra derecha profunda en sulcus, ILA izquierdo posterior y superficial, piramidal derecho espasmódico.</span>`;
+                }} else if (presetKey === 'sacro_ai_i') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Izquierdo (Antero-Inferior I)`;
+                    targetSacrumRotY = -0.04;
+                    targetSacrumRotZ = 0.025;
+                    targetSacrumPosZ = -0.02;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Izquierdo:</strong> Hemibase sacra izquierda profunda en sulcus, ILA derecho posterior y superficial, piramidal izquierdo tenso.</span>`;
+                }} else if (presetKey === 'sacro_ps_d') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Derecho (Postero-Superior D)`;
+                    targetSacrumRotY = -0.04;
+                    targetSacrumRotZ = 0.025;
+                    targetSacrumPosZ = 0.02;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Derecho:</strong> Hemibase derecha superficial en sulcus rígido, ILA izquierdo profundo, Spring test rígido en base derecha.</span>`;
+                }} else if (presetKey === 'sacro_ps_i') {{
+                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Izquierdo (Postero-Superior I)`;
+                    targetSacrumRotY = 0.04;
+                    targetSacrumRotZ = -0.025;
+                    targetSacrumPosZ = 0.02;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Izquierdo:</strong> Hemibase izquierda superficial en sulcus rígido, ILA derecho profundo, maléolo izquierdo alto.</span>`;
                 }} else if (presetKey === 'torsion_ant') {{
-                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Anterior (${{isRight ? 'Der/Der' : 'Izq/Izq'}})`;
+                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Anterior (${{isRight ? 'R/R' : 'L/L'}})`;
                     if (isRight) {{
                         targetSacrumRotY = 0.045;
                         targetSacrumRotZ = -0.025;
@@ -3206,9 +3363,9 @@ def generar_visor_3d_pelvis(
                         targetSacrumRotZ = 0.025;
                         targetSacrumPosZ = -0.015;
                     }}
-                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Anterior (${{isRight ? 'D/D' : 'I/I'}}):</strong> Sulcus profundo en lado dinámico, AIL posterior contralateral, Spring test negativo (elástico).</span>`;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Anterior (${{isRight ? 'R/R' : 'L/L'}}):</strong> Sulcus profundo en lado dinámico, AIL posterior contralateral, Spring test elástico normal.</span>`;
                 }} else if (presetKey === 'torsion_post') {{
-                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Posterior (${{isRight ? 'Der/Izq' : 'Izq/Der'}})`;
+                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Posterior (${{isRight ? 'R/L' : 'L/R'}})`;
                     if (isRight) {{
                         targetSacrumRotY = -0.045;
                         targetSacrumRotZ = 0.025;
@@ -3218,7 +3375,7 @@ def generar_visor_3d_pelvis(
                         targetSacrumRotZ = -0.025;
                         targetSacrumPosZ = 0.015;
                     }}
-                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (${{isRight ? 'D/I' : 'I/D'}}):</strong> Base sacra posteriorizada (sulcus plano/rígido), Spring test positivo franco (bloqueo duro).</span>`;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (${{isRight ? 'R/L' : 'L/R'}}):</strong> Base sacra posteriorizada rígida, Spring test francamente positivo (+).</span>`;
                 }}
 
                 updateDidacticCard(presetKey);
@@ -5111,85 +5268,23 @@ elif nav_activa == OPCIONES_MENU_PRINCIPAL[2]:
         def _render_modulo_c():
             # Módulo C: Atlas Biomecánico Interactivo y Galería de Disfunciones 3D
             st.markdown("#### 📚 Atlas Biomecánico Interactivo y Galería de Disfunciones 3D")
-            st.caption("Estación clínica 3D interactiva en tiempo real. Seleccione categoría, disfunción específica y hemipelvis afectada. La pelvis 3D y la ficha didáctica inferior se actualizarán instantáneamente con los parámetros anatomo-patológicos y vectores de ajuste.")
+            st.caption("Estación clínica 3D interactiva autónoma en tiempo real. Utilice la barra de control nativa integrada en el visor 3D para alternar fluidamente entre categorías, disfunciones y hemipelvis sin recargas de página.")
 
-            # 1. SELECTOR DEL MÓDULO C
-            st.markdown("##### 🎛️ Selectores Biomecánicos de Simulación:")
-            col_cat, col_disf, col_lado = st.columns([1.6, 2.2, 1.2])
+            # Variables de compatibilidad clínica y didáctica (gestión cinemática autónoma en visor 3D)
+            lado_afectado = palpacion_inst.lado_restriccion.value if palpacion_inst else "Derecho"
+            lado_actual = lado_afectado
+            cat_seleccionada = "Disfunciones Sagitales (Rotacionales)"
+            disf_nombre_sel = "Ilíaco Posterior (PI / Retroversión)"
+            disf_seleccionada = disf_nombre_sel
+            preset_actual = "pi"
 
-            CATEGORIAS_ATLAS = {
-                "Disfunciones Sagitales (Rotacionales)": [
-                    ("pi", "Ilíaco Posterior (PI / Retroversión)"),
-                    ("as", "Ilíaco Anterior (AS / Anteversión)"),
-                ],
-                "Disfunciones Verticales (Cizallamientos / Slips)": [
-                    ("up", "Ilíaco Ascendido (Upslip Craneal)"),
-                    ("down", "Ilíaco Descendido (Downslip Caudal)"),
-                ],
-                "Disfunciones Transversales (Flares)": [
-                    ("outflare", "Outflare (Rotación Externa / EX)"),
-                    ("inflare", "Inflare (Rotación Interna / IN)"),
-                ],
-                "Disfunciones Púbicas": [
-                    ("pubis_up", "Pubis Ascendido (Cizallamiento Superior)"),
-                    ("pubis_down", "Pubis Descendido (Cizallamiento Inferior)"),
-                ],
-                "Disfunciones Sacras": [
-                    ("sacro_flexion", "Sacro en Flexión Bilateral"),
-                    ("sacro_extension", "Sacro en Extensión Bilateral"),
-                    ("sacro_ai_d", "Sacro Antero-Inferior Derecho"),
-                    ("sacro_ps_i", "Sacro Postero-Superior Izquierdo"),
-                    ("sacro_flex_uni", "Sacro en Flexión Unilateral (Inclinado)"),
-                    ("sacro_ext_uni", "Sacro en Extensión Unilateral"),
-                    ("torsion_ant", "Torsión Sacra Anterior (Fisiológica R/R o L/L)"),
-                    ("torsion_post", "Torsión Sacra Posterior (No Fisiológica R/L o L/R)"),
-                ]
-            }
-
-            with col_cat:
-                cat_seleccionada = st.selectbox(
-                    "📂 Categoría:",
-                    options=list(CATEGORIAS_ATLAS.keys()),
-                    index=0,
-                    key="modulo_c_cat_sel"
-                )
-
-            opciones_disf = CATEGORIAS_ATLAS[cat_seleccionada]
-            nombres_disf = [opt[1] for opt in opciones_disf]
-
-            # Reset seguro de la disfunción si se cambia de categoría
-            disf_index = 0
-            if "modulo_c_disf_sel" in st.session_state and st.session_state.modulo_c_disf_sel in nombres_disf:
-                disf_index = nombres_disf.index(st.session_state.modulo_c_disf_sel)
-            elif "modulo_c_disf_sel" in st.session_state:
-                st.session_state.modulo_c_disf_sel = nombres_disf[0]
-
-            with col_disf:
-                disf_nombre_sel = st.selectbox(
-                    "🎯 Disfunción Específica:",
-                    options=nombres_disf,
-                    index=disf_index,
-                    key="modulo_c_disf_sel"
-                )
-
-            preset_actual = next(opt[0] for opt in opciones_disf if opt[1] == disf_nombre_sel)
-
-            with col_lado:
-                lado_actual = st.radio(
-                    "🦵 Hemipelvis Afectada:",
-                    options=["Derecho", "Izquierdo"],
-                    index=0,
-                    horizontal=True,
-                    key="modulo_c_lado_sel"
-                )
-
-            # 2. VISOR 3D ANATÓMICO (Sin paneles superpuestos, 100% visibilidad pélvica)
+            # 2. VISOR 3D ANATÓMICO (100% interactivo, catálogo completo integrado sin reruns)
             atlas_html = generar_visor_3d_pelvis(
                 palpacion=palpacion_inst,
                 diagnostico=diagnostico_actual,
                 preset_inicial=preset_actual,
                 lado_inicial=lado_actual,
-                mostrar_ficha_didactica=False,
+                mostrar_ficha_didactica=True,
                 es_modo_atlas=True,
                 altura_canvas=850
             )
