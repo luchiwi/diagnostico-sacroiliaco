@@ -1355,8 +1355,10 @@ def generar_visor_3d_pelvis(
                     <span class="preset-cat-label">SACRO:</span>
                     <button id="btn-preset-sacro_flexion" class="v3d-btn-preset {'active' if preset_init == 'sacro_flexion' else ''}" onclick="applyAtlasPreset('sacro_flexion')">Flex. Bilat.</button>
                     <button id="btn-preset-sacro_extension" class="v3d-btn-preset {'active' if preset_init == 'sacro_extension' else ''}" onclick="applyAtlasPreset('sacro_extension')">Ext. Bilat.</button>
-                    <button id="btn-preset-sacro_ai_d" class="v3d-btn-preset {'active' if preset_init == 'sacro_ai_d' else ''}" onclick="applyAtlasPreset('sacro_ai_d')">Sacro Ant. D</button>
-                    <button id="btn-preset-sacro_ps_i" class="v3d-btn-preset {'active' if preset_init == 'sacro_ps_i' else ''}" onclick="applyAtlasPreset('sacro_ps_i')">Sacro Post. I</button>
+                    <button id="btn-preset-sacro_ai_d" class="v3d-btn-preset {'active' if preset_init == 'sacro_ai_d' else ''}" onclick="applyAtlasPreset('sacro_ai_d')">Ant. D</button>
+                    <button id="btn-preset-sacro_ai_i" class="v3d-btn-preset {'active' if preset_init == 'sacro_ai_i' else ''}" onclick="applyAtlasPreset('sacro_ai_i')">Ant. I</button>
+                    <button id="btn-preset-sacro_ps_d" class="v3d-btn-preset {'active' if preset_init == 'sacro_ps_d' else ''}" onclick="applyAtlasPreset('sacro_ps_d')">Post. D</button>
+                    <button id="btn-preset-sacro_ps_i" class="v3d-btn-preset {'active' if preset_init == 'sacro_ps_i' else ''}" onclick="applyAtlasPreset('sacro_ps_i')">Post. I</button>
                     <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Tors. Ant.</button>
                     <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Tors. Post.</button>
                 </div>
@@ -2213,9 +2215,12 @@ def generar_visor_3d_pelvis(
             let targetTransYRight = 0.0, currentTransYRight = 0.0;
             let targetTransZRight = 0.0, currentTransZRight = 0.0;
 
-            // Interpolación para el nodo Sacro (Torsiones sobre eje oblicuo)
+            // Interpolación para el nodo Sacro (Biomecánica y Cinemática Completa en 3 Ejes)
+            let targetSacrumRotX = 0.0, currentSacrumRotX = 0.0;
             let targetSacrumRotY = 0.0, currentSacrumRotY = 0.0;
             let targetSacrumRotZ = 0.0, currentSacrumRotZ = 0.0;
+            let targetSacrumPosX = 0.0, currentSacrumPosX = 0.0;
+            let targetSacrumPosY = 0.0, currentSacrumPosY = 0.0;
             let targetSacrumPosZ = 0.0, currentSacrumPosZ = 0.0;
 
             const DEFAULT_CAM_DISTANCE = 2.3;
@@ -2385,8 +2390,11 @@ def generar_visor_3d_pelvis(
                         if (typeof tr.currentRotYRight === 'number') currentRotYRight = tr.currentRotYRight;
                         if (typeof tr.currentTransYRight === 'number') currentTransYRight = tr.currentTransYRight;
                         if (typeof tr.currentTransZRight === 'number') currentTransZRight = tr.currentTransZRight;
+                        if (typeof tr.currentSacrumRotX === 'number') currentSacrumRotX = tr.currentSacrumRotX;
                         if (typeof tr.currentSacrumRotY === 'number') currentSacrumRotY = tr.currentSacrumRotY;
                         if (typeof tr.currentSacrumRotZ === 'number') currentSacrumRotZ = tr.currentSacrumRotZ;
+                        if (typeof tr.currentSacrumPosX === 'number') currentSacrumPosX = tr.currentSacrumPosX;
+                        if (typeof tr.currentSacrumPosY === 'number') currentSacrumPosY = tr.currentSacrumPosY;
                         if (typeof tr.currentSacrumPosZ === 'number') currentSacrumPosZ = tr.currentSacrumPosZ;
                     }}
                 }} catch(e) {{}}
@@ -2851,6 +2859,7 @@ def generar_visor_3d_pelvis(
                 // Asignar el material óseo uniforme visible a todas las mallas
                 if (sacroMesh) {{
                     sacroMesh.material = boneMaterial.clone();
+                    sacroMesh.userData.basePos = sacroMesh.position.clone();
                     pelvisGroup.add(sacroMesh);
                 }}
 
@@ -2882,6 +2891,7 @@ def generar_visor_3d_pelvis(
                 sacroGeom.rotateX(Math.PI);
                 sacroMesh = new THREE.Mesh(sacroGeom, boneMaterial.clone());
                 sacroMesh.position.set(0, 0.1, -0.1);
+                sacroMesh.userData.basePos = sacroMesh.position.clone();
                 pelvisGroup.add(sacroMesh);
 
                 const iliacoGeom = new THREE.TorusGeometry(0.65, 0.16, 16, 32, Math.PI * 1.3);
@@ -2983,19 +2993,19 @@ def generar_visor_3d_pelvis(
                     correction: "• Ajuste HVLA: Decúbito lateral con hemipelvis afectada arriba. PCP: Cara medial de EIPS superior. LOD: Medial a Lateral (M-L) con antebrazo perpendicular para abrir la espina hacia lateral.\\n• MET (Mitchell): Cadera flectada a 90°. Contracción isométrica de aductores hacia línea media al 20-25% por 7-10s. Relajación y abducción pasiva hacia la barrera."
                 }},
                 "torsion_ant": {{
-                    title: "Torsión Sacra Anterior (D/D o I/I)",
+                    title: "Torsión Sacra Anterior (R/R o L/L) (Fisiológica)",
                     category: "Disfunción Sacroilíaca sobre Eje Oblicuo (Fisiológica)",
-                    listing: "Mitchell: Torsión Anterior (Derecha/Derecha o Izquierda/Izquierda)",
+                    listing: "Mitchell: Torsión Anterior (R/R o L/L)",
                     mechanism: "Sobrecarga en flexión con rotación lumbar sincronizada durante la marcha o levantamiento asimétrico en bipedestación.",
-                    palpation: "• Surco Sacro: Profundo en el lado opuesto al eje oblicuo dinámico\\n• Ángulo Inferolateral (AIL): Posterior e inferior contralateral al surco profundo\\n• Spring Test: NEGATIVO (retiene elasticidad normal y lordosis fisiológica)\\n• Test Supino/Prono: Inversión (pierna que parece larga en supino pasa a ser corta en prono)\\n• Piramidal: Espasmo e hipertonía notable del lado del eje oblicuo",
+                    palpation: "• Si R/R: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación anterior de la base sacra izquierda (sulcus izquierdo anterior/profundo, AIL derecho posterior/inferior)\\n• Si L/L: Eje oblicuo izquierdo. Rotación anterior de la base sacra derecha\\n• Spring Test: NEGATIVO (retiene elasticidad normal)\\n• Test Supino/Prono: Inversión de longitud maleolar",
                     correction: "• Ajuste HVLA: Paciente en decúbito lateral sobre el lado de la base profunda (abajo). Flexión de cadera >90° para fijar L5-S1. PCP: Pisiforme sobre AIL posteriorizado arriba. LOD: P-A rápido para desrotar el sacro.\\n• MET (Mitchell): Posición de Sims (semi-prono) sobre el lado del eje oblicuo. El paciente intenta elevar ambos tobillos hacia el techo al 25% por 7-10s contra resistencia fija."
                 }},
                 "torsion_post": {{
-                    title: "Torsión Sacra Posterior (D/I o I/D)",
+                    title: "Torsión Sacra Posterior (R/L o L/R) (No Fisiológica)",
                     category: "Disfunción Sacroilíaca sobre Eje Oblicuo (No Fisiológica)",
-                    listing: "Mitchell: Torsión Posterior (Derecha/Izquierda o Izquierda/Derecha)",
+                    listing: "Mitchell: Torsión Posterior (R/L o L/R)",
                     mechanism: "Flexión de tronco brusca con carga excéntrica inesperada o traumatismo en caída que atrapa el sacro en retroversión no fisiológica.",
-                    palpation: "• Surco Sacro: Plano, superficial y doloroso (base sacra posteriorizada hacia atrás)\\n• Ángulo Inferolateral (AIL): Anterior y superior contralateral a la base posteriorizada\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera, sin juego elástico, rectificación lumbar)\\n• Test Supino/Prono: Inversión (pierna corta en supino pasa a ser larga en prono)\\n• Tensión miofascial: Severa hipertonía de multífidos L5-S1 y piramidal",
+                    palpation: "• Si R/L: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación posterior de la base sacra izquierda (sulcus izquierdo posterior/lleno, AIL izquierdo anterior)\\n• Si L/R: Eje oblicuo izquierdo. Rotación posterior de la base sacra derecha\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera)\\n• Test Supino/Prono: Inversión de longitud maleolar",
                     correction: "• Ajuste HVLA: Decúbito lateral con la base sacra posteriorizada arriba. Cadera flexionada >90°. PCP: Eminencia hipotenar directamente en el sulcus/base sacra rígida. LOD: P-A con ligero vector M-L para intruir la base fija hacia anterior.\\n• MET (Mitchell): Decúbito lateral sobre el lado opuesto al eje oblicuo (tronco rotado hacia atrás). Pierna superior extendida colgando detrás de la camilla. Contracción isométrica de extensión de cadera al 25% por 7-10s."
                 }},
                 "pubis_up": {{
@@ -3015,51 +3025,51 @@ def generar_visor_3d_pelvis(
                     correction: "• Ajuste HVLA: Decúbito supino con cadera y rodilla homolateral flexionadas al pecho. Contacto en cara inferior de la sínfisis/rama isquiopúbica. LOD: De caudal a craneal (I-S).\\n• MET (Mitchell): Paciente en decúbito supino, rodillas flexionadas y pies apoyados. Separación resistida de rodillas (abducción isométrica) seguida de técnica de 'escopeta' para sínfisis."
                 }},
                 "sacro_flexion": {{
-                    title: "Sacro en Flexión Bilateral (Nutación Bilateral)",
+                    title: "Sacro en Flexión Bilateral (Nutación)",
                     category: "Disfunción Sacroilíaca en Plano Sagital",
-                    listing: "Mitchell / Osteopatía: Sacro en Flexión Bilateral (Nutación Bilateral)",
+                    listing: "Mitchell / Osteopatía: Sacro en Flexión Bilateral (Nutación)",
                     mechanism: "Sobrecarga en flexión lumbar prolongada, esfuerzo de carga en inclinación anterior forzada o traumatismo posterior.",
-                    palpation: "• Surco Sacro: Bilateralmente profundo y doloroso a la palpación profunda\\n• Ápex Sacro: Postero-superior prominente hacia atrás\\n• Ángulos Inferolaterales (AIL): Anteriores y difíciles de palpar\\n• Spring Test: NEGATIVO (retiene elasticidad y aumento de lordosis lumbar)\\n• Maléolos: Nivelados simétricos",
+                    palpation: "• Eje: X transversal medio\\n• Base Sacra: Rotación anterior con inclinación anteroinferior del promontorio\\n• Ápex Sacro: Hacia posterior prominente\\n• Surco Sacro: Bilateralmente profundo\\n• Spring Test: NEGATIVO (retiene elasticidad normal)\\n• Maléolos: Nivelados simétricos",
                     correction: "• Ajuste HVLA: Paciente en decúbito prono. PCP: Base sacra línea media bilateral con talón de la mano. LOD: Tracción/empuje de ápex hacia caudal o base sacra P-A hacia desnutación en espiración.\\n• MET (Mitchell): Paciente en prono o cuadrupedia. Esfuerzo espiratorio profundo mientras el clínico resiste la contranutación."
                 }},
                 "sacro_extension": {{
-                    title: "Sacro en Extensión Bilateral (Contranutación Bilateral)",
+                    title: "Sacro en Extensión Bilateral (Contranutación)",
                     category: "Disfunción Sacroilíaca en Plano Sagital",
-                    listing: "Mitchell / Osteopatía: Sacro en Extensión Bilateral (Contranutación Bilateral)",
+                    listing: "Mitchell / Osteopatía: Sacro en Extensión Bilateral (Contranutación)",
                     mechanism: "Caída en sedestación directa sobre el sacro/cóccix, hiperextensión lumbar violenta o rectificación lumbosacra rígida.",
-                    palpation: "• Surco Sacro: Superficial, plano y prominente hacia posterior bilateralmente\\n• Ápex Sacro: Antero-inferior hundido hacia la pelvis menor\\n• Spring Test: POSITIVO FRANCO (resistencia rígida 'en tabla de madera')\\n• Lordosis lumbar: Rectificada y aplanada\\n• Tejidos: Hipertonía lumbar baja bilateral",
+                    palpation: "• Eje: X transversal medio\\n• Base Sacra: Rotación posterior con retroceso del promontorio y ascenso en +Y\\n• Ápex Sacro: Hacia anterior hundido hacia la pelvis menor\\n• Surco Sacro: Superficial, plano bilateralmente\\n• Spring Test: POSITIVO FRANCO (bloqueo rígido en tabla de madera)\\n• Lordosis lumbar: Rectificada y aplanada",
                     correction: "• Ajuste HVLA: Paciente en decúbito prono con cojín bajo el abdomen. PCP: Base sacra en la línea media con eminencia hipotenar reforzada. LOD: P-A puro y enérgico al final de la inspiración para inducir nutación fisiológica.\\n• MET (Mitchell): Paciente en prono apoyado sobre codos (posición de esfinge). Inspiración profunda mantenida empujando el sacro hacia anterior."
                 }},
                 "sacro_ai_d": {{
-                    title: "Sacro Anterior Derecho (Antero-Inferior D)",
+                    title: "Sacro Anterior Derecho (Unilateral)",
                     category: "Disfunción Sacra Unilateral / Oblicua",
-                    listing: "Osteopatía: Sacro Antero-Inferior Derecho (Falsa Pierna Larga)",
+                    listing: "Osteopatía: Sacro Anterior Derecho (Antero-Inferior D / Falsa Pierna Larga)",
                     mechanism: "Sobrecarga rotacional asimétrica con torsión pélvica, espasmo defensivo unilateral del piramidal derecho.",
-                    palpation: "• Surco Sacro Derecho: Profundo y adelantado hacia anterior\\n• Ángulo Inferolateral (ILA) Izquierdo: Prominente, superficial y descendido\\n• Piramidal: Espasmo hipertónico severo en piramidal derecho\\n• Maléolos: Pierna derecha funcionalmente larga\\n• Spring Test: Asimétrico",
+                    palpation: "• Hemi-base sacra derecha: Profundizada en Z (anterior) y leve descenso (Y-)\\n• Ápex/AIL homolateral derecho: Sin cambio o posterior relativo\\n• Sulcus Sacro Derecho: Profundo\\n• Ángulo Inferolateral (ILA) Izquierdo: Prominente y superficial\\n• Piramidal: Espasmo hipertónico severo en piramidal derecho\\n• Maléolos: Pierna derecha funcionalmente larga\\n• Spring Test: Asimétrico",
                     correction: "• Ajuste HVLA: Decúbito lateral sobre lado derecho. PCP: ILA izquierdo (lado superficial). LOD: Posterior a Anterior (P-A) con vector Lateral a Medial (L-M) y codo pegado al cuerpo.\\n• MET (Mitchell): Posición de Sims lateral. Contracción isométrica de rotadores externos al 20% por 7-10s."
                 }},
                 "sacro_ai_i": {{
-                    title: "Sacro Anterior Izquierdo (Antero-Inferior I)",
+                    title: "Sacro Anterior Izquierdo (Unilateral)",
                     category: "Disfunción Sacra Unilateral / Oblicua",
-                    listing: "Osteopatía: Sacro Antero-Inferior Izquierdo",
+                    listing: "Osteopatía: Sacro Anterior Izquierdo (Antero-Inferior I)",
                     mechanism: "Microtrauma repetitivo en rotación pélvica izquierda con carga asimétrica, hipertonía del piramidal izquierdo.",
-                    palpation: "• Surco Sacro Izquierdo: Profundo y anteriorizado\\n• ILA Derecho: Prominente hacia posterior y más caudal\\n• Piramidal: Banda tensa exquisitamente reactiva en piramidal izquierdo\\n• Maléolos: Falsa pierna larga izquierda",
+                    palpation: "• Hemi-base sacra izquierda: Profundizada en Z (anterior) y leve descenso (Y-)\\n• Ápex/AIL homolateral izquierdo: Sin cambio o posterior relativo\\n• Sulcus Sacro Izquierdo: Profundo\\n• ILA Derecho: Prominente hacia posterior y más caudal\\n• Piramidal: Banda tensa reactiva en piramidal izquierdo\\n• Maléolos: Falsa pierna larga izquierda",
                     correction: "• Ajuste HVLA: Decúbito lateral sobre lado izquierdo. PCP: ILA derecho posterior. LOD: P-A + L-M con torque de desrotación sacra.\\n• MET (Mitchell): Decúbito lateral Sims. Contracción resistida de abductores/rotadores al 20% por 7-10s."
                 }},
                 "sacro_ps_d": {{
-                    title: "Sacro Posterior Derecho (Postero-Superior D)",
+                    title: "Sacro Posterior Derecho (Unilateral / Postero-Superior)",
                     category: "Disfunción Sacra Unilateral / Oblicua",
-                    listing: "Osteopatía: Sacro Postero-Superior Derecho",
+                    listing: "Osteopatía: Sacro Posterior Derecho (Postero-Superior D)",
                     mechanism: "Impacto axial en flexión con hemipelvis derecha bloqueada en contranutación unilateral.",
-                    palpation: "• Surco Sacro Derecho: Superficial, plano y bloqueado hacia posterior\\n• ILA Izquierdo: Profundo y adelantado hacia anterior\\n• Maléolos: Maléolo derecho más alto en decúbito supino\\n• Spring Test: Rígido positivo sobre la base sacra derecha",
+                    palpation: "• Hemi-base sacra derecha: Proyectada hacia posterior en +Z y leve ascenso en +Y\\n• Sulcus Sacro Derecho: Plano y lleno\\n• ILA Izquierdo: Profundo y adelantado hacia anterior\\n• Maléolos: Maléolo derecho más alto en decúbito supino\\n• Spring Test: Rígido positivo sobre la base sacra derecha",
                     correction: "• Ajuste HVLA: Decúbito lateral con base derecha hacia arriba. PCP: Medial a la EIPS derecha sobre base sacra. LOD: P-A + M-L + de craneal a caudal para desimpactar la carilla sacra.\\n• MET (Mitchell): Paciente en decúbito lateral sobre lado izquierdo, extensión isométrica de cadera derecha al 20%."
                 }},
                 "sacro_ps_i": {{
-                    title: "Sacro Posterior Izquierdo (Postero-Superior I)",
+                    title: "Sacro Posterior Izquierdo (Unilateral / Postero-Superior)",
                     category: "Disfunción Sacra Unilateral / Oblicua",
-                    listing: "Osteopatía: Sacro Postero-Superior Izquierdo",
+                    listing: "Osteopatía: Sacro Posterior Izquierdo (Postero-Superior I)",
                     mechanism: "Atrapamiento de la hemibase sacra izquierda en contra-nutación tras esfuerzo asimétrico en flexión de tronco.",
-                    palpation: "• Surco Sacro Izquierdo: Superficial, plano y doloroso a la palpación local\\n• ILA Derecho: Hundido hacia anterior y superior\\n• Maléolos: Maléolo izquierdo más alto en supino\\n• Spring Test: Bloqueo rígido franco en base sacra izquierda",
+                    palpation: "• Hemi-base sacra izquierda: Proyectada hacia posterior en +Z y leve ascenso en +Y\\n• Sulcus Sacro Izquierdo: Plano y lleno\\n• ILA Derecho: Hundido hacia anterior y superior\\n• Maléolos: Maléolo izquierdo más alto en supino\\n• Spring Test: Bloqueo rígido franco en base sacra izquierda",
                     correction: "• Ajuste HVLA: Decúbito lateral con hemibase izquierda hacia arriba. PCP: Borde medial de EIPS izquierda en surco sacro. LOD: P-A + M-L de craneal a caudal.\\n• MET (Mitchell): Decúbito lateral derecho. Extensión isométrica de cadera izquierda al 25% por 7-10s."
                 }}
             }};
@@ -3096,14 +3106,14 @@ def generar_visor_3d_pelvis(
                 "sacro": {{
                     name: "Disfunciones Sacras",
                     presets: [
-                        {{ key: "sacro_flexion", name: "Sacro en Flexión Bilateral" }},
-                        {{ key: "sacro_extension", name: "Sacro en Extensión Bilateral" }},
-                        {{ key: "sacro_ai_d", name: "Sacro Anterior Derecho" }},
-                        {{ key: "sacro_ai_i", name: "Sacro Anterior Izquierdo" }},
-                        {{ key: "sacro_ps_d", name: "Sacro Posterior Derecho" }},
-                        {{ key: "sacro_ps_i", name: "Sacro Posterior Izquierdo" }},
-                        {{ key: "torsion_ant", name: "Torsión Sacra Anterior (R/R o L/L)" }},
-                        {{ key: "torsion_post", name: "Torsión Sacra Posterior (R/L o L/R)" }}
+                        {{ key: "sacro_flexion", name: "Sacro en Flexión Bilateral (Nutación)" }},
+                        {{ key: "sacro_extension", name: "Sacro en Extensión Bilateral (Contranutación)" }},
+                        {{ key: "sacro_ai_d", name: "Sacro Anterior Derecho (Unilateral)" }},
+                        {{ key: "sacro_ai_i", name: "Sacro Anterior Izquierdo (Unilateral)" }},
+                        {{ key: "sacro_ps_d", name: "Sacro Posterior Derecho (Unilateral / Postero-Superior)" }},
+                        {{ key: "sacro_ps_i", name: "Sacro Posterior Izquierdo (Unilateral / Postero-Superior)" }},
+                        {{ key: "torsion_ant", name: "Torsión Sacra Anterior (R/R o L/L) (Fisiológica)" }},
+                        {{ key: "torsion_post", name: "Torsión Sacra Posterior (R/L o L/R) (No Fisiológica)" }}
                     ]
                 }}
             }};
@@ -3201,7 +3211,8 @@ def generar_visor_3d_pelvis(
                 // Reset de objetivos de transformación
                 targetRotLeft = 0.0; targetRotYLeft = 0.0; targetTransYLeft = 0.0; targetTransZLeft = 0.0;
                 targetRotRight = 0.0; targetRotYRight = 0.0; targetTransYRight = 0.0; targetTransZRight = 0.0;
-                targetSacrumRotY = 0.0; targetSacrumRotZ = 0.0; targetSacrumPosZ = 0.0;
+                targetSacrumRotX = 0.0; targetSacrumRotY = 0.0; targetSacrumRotZ = 0.0;
+                targetSacrumPosX = 0.0; targetSacrumPosY = 0.0; targetSacrumPosZ = 0.0;
 
                 if (presetKey === 'neutral') {{
                     statusBadge.className = 'badge-status badge-neutral';
@@ -3314,68 +3325,140 @@ def generar_visor_3d_pelvis(
                     hudInfo.innerHTML = `<span>⚡ <strong>Pubis Descendido [${{currentPatientSide}}]:</strong> Cizallamiento inferior de la sínfisis púbica con escalón inferior y espasmo de aductores.</span>`;
                 }} else if (presetKey === 'sacro_flexion') {{
                     statusBadge.textContent = `⚡ DEMO: Sacro en Flexión Bilateral (Nutación)`;
-                    targetSacrumPosZ = -0.035;
+                    // Eje X transversal medio. Rotación anterior de la base sacra (inclinación anteroinferior del promontorio, ápex hacia posterior).
+                    targetSacrumRotX = 0.07;
                     targetSacrumRotY = 0.0;
                     targetSacrumRotZ = 0.0;
+                    targetSacrumPosX = 0.0;
+                    targetSacrumPosY = -0.015;
+                    targetSacrumPosZ = 0.025;
                     targetRotLeft = -0.015;
                     targetRotRight = -0.015;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Flexión Bilateral:</strong> Nutación sacra bilateral. Ambas bases sacras profundas en el surco, ápex postero-superior.</span>`;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Flexión Bilateral (Nutación):</strong> Eje X transversal medio. Rotación anterior de la base sacra con descenso anteroinferior del promontorio y ápex hacia posterior. Sulcus profundos bilaterales, Spring test elástico.</span>`;
                 }} else if (presetKey === 'sacro_extension') {{
                     statusBadge.textContent = `⚡ DEMO: Sacro en Extensión Bilateral (Contranutación)`;
-                    targetSacrumPosZ = 0.035;
+                    // Eje X transversal medio. Rotación posterior de la base sacra (retroceso del promontorio, ápex hacia anterior).
+                    targetSacrumRotX = -0.07;
                     targetSacrumRotY = 0.0;
                     targetSacrumRotZ = 0.0;
+                    targetSacrumPosX = 0.0;
+                    targetSacrumPosY = 0.015;
+                    targetSacrumPosZ = -0.025;
                     targetRotLeft = 0.015;
                     targetRotRight = 0.015;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Extensión Bilateral:</strong> Contranutación bilateral. Bases sacras superficiales y prominentes, Spring test francamente rígido (+).</span>`;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro en Extensión Bilateral (Contranutación):</strong> Eje X transversal medio. Rotación posterior de la base sacra con retroceso del promontorio y ápex hacia anterior. Sulcus planos bilaterales, Spring test duro (+).</span>`;
                 }} else if (presetKey === 'sacro_ai_d') {{
-                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Derecho (Antero-Inferior D)`;
-                    targetSacrumRotY = 0.04;
+                    isRight = true;
+                    currentPatientSide = "Derecho";
+                    const btnD = document.getElementById('side-btn-d');
+                    const btnI = document.getElementById('side-btn-i');
+                    if (btnD) btnD.classList.add('active');
+                    if (btnI) btnI.classList.remove('active');
+
+                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Derecho (Unilateral)`;
+                    // Hemi-base sacra derecha profundizada en Z (anterior) y leve descenso (Y-). Ápex/AIL homolateral sin cambio o posterior relativo.
+                    targetSacrumRotX = 0.035;
+                    targetSacrumRotY = 0.048;
                     targetSacrumRotZ = -0.025;
-                    targetSacrumPosZ = -0.02;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Derecho:</strong> Hemibase sacra derecha profunda en sulcus, ILA izquierdo posterior y superficial, piramidal derecho espasmódico.</span>`;
+                    targetSacrumPosX = 0.005;
+                    targetSacrumPosY = -0.02;
+                    targetSacrumPosZ = 0.022;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Derecho (Unilateral):</strong> Hemi-base sacra derecha profundizada en Z (anterior) y leve descenso (Y-). Ápex/AIL homolateral sin cambio o posterior relativo. Sulcus derecho profundo.</span>`;
                 }} else if (presetKey === 'sacro_ai_i') {{
-                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Izquierdo (Antero-Inferior I)`;
-                    targetSacrumRotY = -0.04;
+                    isRight = false;
+                    currentPatientSide = "Izquierdo";
+                    const btnD = document.getElementById('side-btn-d');
+                    const btnI = document.getElementById('side-btn-i');
+                    if (btnD) btnD.classList.remove('active');
+                    if (btnI) btnI.classList.add('active');
+
+                    statusBadge.textContent = `⚡ DEMO: Sacro Anterior Izquierdo (Unilateral)`;
+                    // Hemi-base sacra izquierda profundizada en Z (anterior) y leve descenso.
+                    targetSacrumRotX = 0.035;
+                    targetSacrumRotY = -0.048;
                     targetSacrumRotZ = 0.025;
-                    targetSacrumPosZ = -0.02;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Izquierdo:</strong> Hemibase sacra izquierda profunda en sulcus, ILA derecho posterior y superficial, piramidal izquierdo tenso.</span>`;
+                    targetSacrumPosX = -0.005;
+                    targetSacrumPosY = -0.02;
+                    targetSacrumPosZ = 0.022;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Anterior Izquierdo (Unilateral):</strong> Hemi-base sacra izquierda profundizada en Z (anterior) y leve descenso (Y-). Sulcus izquierdo profundo, ILA derecho posterior.</span>`;
                 }} else if (presetKey === 'sacro_ps_d') {{
-                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Derecho (Postero-Superior D)`;
-                    targetSacrumRotY = -0.04;
+                    isRight = true;
+                    currentPatientSide = "Derecho";
+                    const btnD = document.getElementById('side-btn-d');
+                    const btnI = document.getElementById('side-btn-i');
+                    if (btnD) btnD.classList.add('active');
+                    if (btnI) btnI.classList.remove('active');
+
+                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Derecho (Unilateral / Postero-Superior)`;
+                    // Hemi-base sacra derecha proyectada hacia posterior en +Z y leve ascenso en +Y (sulcus derecho plano/lleno).
+                    targetSacrumRotX = -0.035;
+                    targetSacrumRotY = -0.048;
                     targetSacrumRotZ = 0.025;
-                    targetSacrumPosZ = 0.02;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Derecho:</strong> Hemibase derecha superficial en sulcus rígido, ILA izquierdo profundo, Spring test rígido en base derecha.</span>`;
+                    targetSacrumPosX = -0.005;
+                    targetSacrumPosY = 0.02;
+                    targetSacrumPosZ = 0.022;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Derecho (Unilateral / Postero-Superior):</strong> Hemi-base sacra derecha proyectada hacia posterior en +Z y leve ascenso en +Y. Sulcus derecho plano/lleno, ILA izquierdo profundo.</span>`;
                 }} else if (presetKey === 'sacro_ps_i') {{
-                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Izquierdo (Postero-Superior I)`;
-                    targetSacrumRotY = 0.04;
+                    isRight = false;
+                    currentPatientSide = "Izquierdo";
+                    const btnD = document.getElementById('side-btn-d');
+                    const btnI = document.getElementById('side-btn-i');
+                    if (btnD) btnD.classList.remove('active');
+                    if (btnI) btnI.classList.add('active');
+
+                    statusBadge.textContent = `⚡ DEMO: Sacro Posterior Izquierdo (Unilateral / Postero-Superior)`;
+                    // Hemi-base sacra izquierda proyectada hacia posterior en +Z y leve ascenso en +Y.
+                    targetSacrumRotX = -0.035;
+                    targetSacrumRotY = 0.048;
                     targetSacrumRotZ = -0.025;
-                    targetSacrumPosZ = 0.02;
-                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Izquierdo:</strong> Hemibase izquierda superficial en sulcus rígido, ILA derecho profundo, maléolo izquierdo alto.</span>`;
+                    targetSacrumPosX = 0.005;
+                    targetSacrumPosY = 0.02;
+                    targetSacrumPosZ = 0.022;
+                    hudInfo.innerHTML = `<span>⚡ <strong>Sacro Posterior Izquierdo (Unilateral / Postero-Superior):</strong> Hemi-base sacra izquierda proyectada hacia posterior en +Z y leve ascenso en +Y. Sulcus izquierdo plano/lleno, ILA derecho profundo.</span>`;
                 }} else if (presetKey === 'torsion_ant') {{
-                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Anterior (${{isRight ? 'R/R' : 'L/L'}})`;
                     if (isRight) {{
-                        targetSacrumRotY = 0.045;
-                        targetSacrumRotZ = -0.025;
-                        targetSacrumPosZ = -0.015;
-                    }} else {{
-                        targetSacrumRotY = -0.045;
+                        // Si es R/R: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación anterior de la base sacra izquierda (sulcus izquierdo anterior/profundo, AIL derecho posterior/inferior).
+                        statusBadge.textContent = `⚡ DEMO: Torsión Sacra Anterior (R/R) (Fisiológica)`;
+                        targetSacrumRotX = 0.035;
+                        targetSacrumRotY = -0.048;
                         targetSacrumRotZ = 0.025;
+                        targetSacrumPosX = -0.005;
+                        targetSacrumPosY = -0.012;
                         targetSacrumPosZ = -0.015;
+                        hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Anterior (R/R):</strong> Eje oblicuo derecho (pivote base der. y AIL izq.). Rotación anterior de la base sacra izquierda (sulcus izq. profundo), AIL derecho posterior/inferior. Spring test elástico normal.</span>`;
+                    }} else {{
+                        // Si es L/L: Eje oblicuo izquierdo. Rotación anterior de la base sacra derecha.
+                        statusBadge.textContent = `⚡ DEMO: Torsión Sacra Anterior (L/L) (Fisiológica)`;
+                        targetSacrumRotX = 0.035;
+                        targetSacrumRotY = 0.048;
+                        targetSacrumRotZ = -0.025;
+                        targetSacrumPosX = 0.005;
+                        targetSacrumPosY = -0.012;
+                        targetSacrumPosZ = -0.015;
+                        hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Anterior (L/L):</strong> Eje oblicuo izquierdo (pivote base izq. y AIL der.). Rotación anterior de la base sacra derecha (sulcus der. profundo), AIL izquierdo posterior/inferior. Spring test elástico normal.</span>`;
                     }}
-                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Anterior (${{isRight ? 'R/R' : 'L/L'}}):</strong> Sulcus profundo en lado dinámico, AIL posterior contralateral, Spring test elástico normal.</span>`;
                 }} else if (presetKey === 'torsion_post') {{
-                    statusBadge.textContent = `⚡ DEMO: Torsión Sacra Posterior (${{isRight ? 'R/L' : 'L/R'}})`;
                     if (isRight) {{
-                        targetSacrumRotY = -0.045;
-                        targetSacrumRotZ = 0.025;
-                        targetSacrumPosZ = 0.015;
-                    }} else {{
-                        targetSacrumRotY = 0.045;
+                        // Si es R/L: Eje oblicuo derecho (pivote entre base derecha y AIL izquierdo). Rotación posterior de la base sacra izquierda (sulcus izquierdo posterior/lleno, AIL izquierdo anterior).
+                        statusBadge.textContent = `⚡ DEMO: Torsión Sacra Posterior (R/L) (No Fisiológica)`;
+                        targetSacrumRotX = -0.035;
+                        targetSacrumRotY = 0.048;
                         targetSacrumRotZ = -0.025;
-                        targetSacrumPosZ = 0.015;
+                        targetSacrumPosX = 0.005;
+                        targetSacrumPosY = 0.012;
+                        targetSacrumPosZ = 0.018;
+                        hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (R/L):</strong> Eje oblicuo derecho (pivote base der. y AIL izq.). Rotación posterior de la base sacra izquierda (sulcus izq. lleno/rígido), AIL izquierdo anterior. Spring test duro (+).</span>`;
+                    }} else {{
+                        // Si es L/R: Eje oblicuo izquierdo. Rotación posterior de la base sacra derecha.
+                        statusBadge.textContent = `⚡ DEMO: Torsión Sacra Posterior (L/R) (No Fisiológica)`;
+                        targetSacrumRotX = -0.035;
+                        targetSacrumRotY = -0.048;
+                        targetSacrumRotZ = 0.025;
+                        targetSacrumPosX = -0.005;
+                        targetSacrumPosY = 0.012;
+                        targetSacrumPosZ = 0.018;
+                        hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (L/R):</strong> Eje oblicuo izquierdo (pivote base izq. y AIL der.). Rotación posterior de la base sacra derecha (sulcus der. lleno/rígido), AIL derecho anterior. Spring test duro (+).</span>`;
                     }}
-                    hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (${{isRight ? 'R/L' : 'L/R'}}):</strong> Base sacra posteriorizada rígida, Spring test francamente positivo (+).</span>`;
                 }}
 
                 updateDidacticCard(presetKey);
@@ -3592,14 +3675,21 @@ def generar_visor_3d_pelvis(
                 pivotDer.position.y = SIJ_RIGHT_POS.y + currentTransYRight;
                 pivotDer.position.z = SIJ_RIGHT_POS.z + currentTransZRight;
 
-                // Interpolación fluida (lerp) para el nodo Sacro (Torsiones sobre eje oblicuo)
+                // Interpolación fluida (lerp) para el nodo Sacro (Biomecánica y Cinemática Completa en 3 Ejes)
+                currentSacrumRotX += (targetSacrumRotX - currentSacrumRotX) * 0.08;
                 currentSacrumRotY += (targetSacrumRotY - currentSacrumRotY) * 0.08;
                 currentSacrumRotZ += (targetSacrumRotZ - currentSacrumRotZ) * 0.08;
+                currentSacrumPosX += (targetSacrumPosX - currentSacrumPosX) * 0.08;
+                currentSacrumPosY += (targetSacrumPosY - currentSacrumPosY) * 0.08;
                 currentSacrumPosZ += (targetSacrumPosZ - currentSacrumPosZ) * 0.08;
                 if (sacroMesh) {{
+                    sacroMesh.rotation.x = currentSacrumRotX;
                     sacroMesh.rotation.y = currentSacrumRotY;
                     sacroMesh.rotation.z = currentSacrumRotZ;
-                    sacroMesh.position.z = currentSacrumPosZ;
+                    const bPos = sacroMesh.userData.basePos || new THREE.Vector3(0, 0, 0);
+                    sacroMesh.position.x = bPos.x + currentSacrumPosX;
+                    sacroMesh.position.y = bPos.y + currentSacrumPosY;
+                    sacroMesh.position.z = bPos.z + currentSacrumPosZ;
                 }}
 
                 // Persistir transformaciones actuales en sessionStorage para transición continua sin saltos ni pantalla negra
@@ -3613,8 +3703,11 @@ def generar_visor_3d_pelvis(
                         currentRotYRight: currentRotYRight,
                         currentTransYRight: currentTransYRight,
                         currentTransZRight: currentTransZRight,
+                        currentSacrumRotX: currentSacrumRotX,
                         currentSacrumRotY: currentSacrumRotY,
                         currentSacrumRotZ: currentSacrumRotZ,
+                        currentSacrumPosX: currentSacrumPosX,
+                        currentSacrumPosY: currentSacrumPosY,
                         currentSacrumPosZ: currentSacrumPosZ
                     }}));
                 }} catch(e) {{}}
