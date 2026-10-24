@@ -561,6 +561,66 @@ def obtener_ejercicios_activos(clave: str, subtipo: str = "") -> Dict[str, str]:
                 "con fijación de la cuña sacra en plano neutro."
             )
         }
+    elif "LUMBAR_FRS" in clave:
+        return {
+            "Reeducación Extensora y Desrotación Lumbar": (
+                "Activación de multífidos segmentarios contralaterales y erectores espinales profundos "
+                "para restaurar el cierre facetario fisiológico en extensión (Bird-Dog con extensión pura)."
+            ),
+            "Elongación Neuromuscular del Psoas": (
+                "Liberación posicional y estiramiento excéntrico suave de flexores de cadera (psoas mayor homolateral) "
+                "con retroversión pélvica asistida para retirar la tracción sobre los cuerpos vertebrales lumbares."
+            ),
+            "Control Sensorio-Motor Lumbopélvico": (
+                "Disociación lumbopélvica en bipedestación y paso frontal controlado (Split Squat en neutro) "
+                "evitando compensaciones de flexo-rotación de tronco."
+            )
+        }
+    elif "LUMBAR_ERS" in clave:
+        return {
+            "Reeducación en Flexión Descompresiva (Williams)": (
+                "Ejercicios de apertura facetaria en flexión lumbar protegida (Dead Bug con aplanamiento lumbar "
+                "y rodillas al pecho) para desimbricar la carilla articular bloqueada."
+            ),
+            "Descarga Neuromuscular de Cuadrado Lumbar": (
+                "Elongación pasivo-asistida y contracción-relajación del cuadrado lumbar y multífidos ipsilaterales "
+                "en decúbito lateral con apertura de la concavidad."
+            ),
+            "Fortalecimiento de la Faja Abdominal": (
+                "Activación de pared anterior del abdomen (oblicuos y transverso) para contrarrestar "
+                "el patrón extensor rígido durante transferencias de carga."
+            )
+        }
+    elif "LUMBAR_NSR" in clave:
+        return {
+            "Reeducación del Plano Frontal y Desrotación": (
+                "Elongación activa del cuadrado lumbar y psoas en el lado cóncavo combinada con "
+                "fortalecimiento concéntrico de multífidos en la convexidad."
+            ),
+            "Estabilización Lateral y Core Asimétrico": (
+                "Plancha lateral modificada (Side Plank) del lado de la convexidad para reequilibrar "
+                "las fuerzas de cizallamiento frontal a lo largo de la columna lumbar."
+            ),
+            "Integración Postural en Bipedestación": (
+                "Trabajo de autocrecimiento axial (auto-elongación vertebral) frente a espejo "
+                "para corregir la curva adaptativa funcional en apoyo bipodal."
+            )
+        }
+    elif "LUMBAR_ESPONDILOLISTESIS" in clave:
+        return {
+            "Estabilización Antiextensión en Zona Neutra": (
+                "Reclutamiento de transverso abdominal y oblicuos en decúbito supino (Dead Bug modificado) "
+                "manteniendo estricta zona neutra sin hiperextensión lumbosacra."
+            ),
+            "Fortalecimiento Glúteo y Cadena Posterior": (
+                "Puentes pélvicos (Glute Bridge) con retroversión activa final para reducir el vector de "
+                "cizallamiento anterior de L5 sobre el promontorio sacro."
+            ),
+            "Control Motor Funcional y Educación Ergonómica": (
+                "Reeducación de la bisagra de cadera (Hip Hinge) para transferir cargas sin estrés sagital "
+                "en L5-S1, evitando movimientos de torsión con extensión forzada."
+            )
+        }
     else:
         return {
             "Reeducación Global Lumbopélvica": (
@@ -1148,6 +1208,12 @@ PRESET_TO_CK_KEY = {
     "sacro_ext_uni": "SACRO_EXTENSION_UNILATERAL",
     "pubis_up": "ILIACO_UPSLIP",
     "pubis_down": "ILIACO_DOWNSLIP",
+    "lumbar_frs_d": "LUMBAR_FRS_D",
+    "lumbar_frs_i": "LUMBAR_FRS_I",
+    "lumbar_ers_d": "LUMBAR_ERS_D",
+    "lumbar_ers_i": "LUMBAR_ERS_I",
+    "lumbar_nsr": "LUMBAR_NSR",
+    "lumbar_spondylolisthesis": "LUMBAR_ESPONDILOLISTESIS_L5S1",
 }
 
 CK_KEY_TO_PRESET = {
@@ -1167,6 +1233,12 @@ CK_KEY_TO_PRESET = {
     "SACRO_POSTERO_SUPERIOR_I": "sacro_ps_i",
     "SACRO_FLEXION_UNILATERAL": "sacro_flex_uni",
     "SACRO_EXTENSION_UNILATERAL": "sacro_ext_uni",
+    "LUMBAR_FRS_D": "lumbar_frs_d",
+    "LUMBAR_FRS_I": "lumbar_frs_i",
+    "LUMBAR_ERS_D": "lumbar_ers_d",
+    "LUMBAR_ERS_I": "lumbar_ers_i",
+    "LUMBAR_NSR": "lumbar_nsr",
+    "LUMBAR_ESPONDILOLISTESIS_L5S1": "lumbar_spondylolisthesis",
 }
 
 ATLAS_PRESET_METADATA = {
@@ -1259,6 +1331,36 @@ ATLAS_PRESET_METADATA = {
         "listing": "Cizallamiento Púbico Inferior / Pubis Descendido",
         "mecanismo": "Tracción violenta de aductores (deportistas de impacto, fútbol) o caída a horcajadas.",
         "cinematica_resumen": "Escalón inferior en sínfisis púbica con descenso de la rama púbica homolateral y severo espasmo de aductores.",
+    },
+    "lumbar_frs_d": {
+        "listing": "Mitchell: FRS Derecho (L1-L5) | Fryette II: Flexión-Rotación-Inclinación homolateral derecha",
+        "mecanismo": "Movimiento combinado de flexión brusca de tronco con torsión forzada derecha o esfuerzo asimétrico.",
+        "cinematica_resumen": "Vértebra lumbar en flexión con rotación e inclinación homolateral derecha acopladas. Carilla articular izquierda no cierra ni converge en extensión. Transversa derecha posterior en flexión.",
+    },
+    "lumbar_frs_i": {
+        "listing": "Mitchell: FRS Izquierdo (L1-L5) | Fryette II: Flexión-Rotación-Inclinación homolateral izquierda",
+        "mecanismo": "Flexión de tronco combinada con giro rápido hacia la izquierda o esfuerzo torsional asimétrico.",
+        "cinematica_resumen": "Vértebra lumbar en flexión con rotación e inclinación homolateral izquierda acopladas. Carilla articular derecha no cierra en extensión. Transversa izquierda posterior en flexión.",
+    },
+    "lumbar_ers_d": {
+        "listing": "Mitchell: ERS Derecho (L1-L5) | Fryette II: Extensión-Rotación-Inclinación homolateral derecha",
+        "mecanismo": "Hiperextensión lumbar con rotación forzada derecha (ej. saque de tenis, remate o levantamiento en bipedestación).",
+        "cinematica_resumen": "Vértebra lumbar en extensión con rotación e inclinación homolateral derecha acopladas. Carilla articular izquierda no abre ni desimbrica en flexión anterior. Transversa derecha marcadamente posterior en flexión.",
+    },
+    "lumbar_ers_i": {
+        "listing": "Mitchell: ERS Izquierdo (L1-L5) | Fryette II: Extensión-Rotación-Inclinación homolateral izquierda",
+        "mecanismo": "Extensión forzada de columna con torsión izquierda mantenida o sobrecarga facetaria.",
+        "cinematica_resumen": "Vértebra lumbar en extensión con rotación e inclinación homolateral izquierda acopladas. Carilla articular derecha no abre en flexión. Transversa izquierda marcadamente posterior en flexión.",
+    },
+    "lumbar_nsr": {
+        "listing": "Fryette I: NSR Grupo Lumbar (L1-L5) | Disfunción Adaptativa Neutra Heterolateral",
+        "mecanismo": "Compensación postural crónica ante asimetría pélvica, pierna corta funcional, o escoliosis antálgica funcional.",
+        "cinematica_resumen": "Grupo multi-vertebral en posición neutra con rotación hacia la convexidad e inclinación hacia la concavidad opuesta. Apófisis transversas prominentes en el lado de la convexidad en neutro.",
+    },
+    "lumbar_spondylolisthesis": {
+        "listing": "Meyerding / Wiltse: Espondilolistesis / Inestabilidad Lumbosacra L5-S1",
+        "mecanismo": "Defecto de la pars interarticularis (espondilolisis ístmica), estrés por hiperextensión repetitiva (gimnasia, danza) o artrosis facetaria degenerativa.",
+        "cinematica_resumen": "Cizallamiento sagital anterior de L5 sobre la plataforma sacra S1. Signo del escalón palpable en apófisis espinosa, forámenes estrechados en hiperextensión y pérdida de estabilidad en zona neutra.",
     },
 }
 
@@ -1429,6 +1531,7 @@ def generar_visor_3d_pelvis(
                                 <option value="transversal">Disfunciones Transversales (Flares)</option>
                                 <option value="pubica">Disfunciones Púbicas</option>
                                 <option value="sacro">Disfunciones Sacras</option>
+                                <option value="lumbar">Disfunciones Lumbares (L1-L5)</option>
                             </select>
                         </div>
                         <!-- Selector de Disfunción Específica -->
@@ -1478,6 +1581,15 @@ def generar_visor_3d_pelvis(
                     <button id="btn-preset-sacro_ps_i" class="v3d-btn-preset {'active' if preset_init == 'sacro_ps_i' else ''}" onclick="applyAtlasPreset('sacro_ps_i')">Post. I</button>
                     <button id="btn-preset-torsion_ant" class="v3d-btn-preset {'active' if preset_init == 'torsion_ant' else ''}" onclick="applyAtlasPreset('torsion_ant')">Tors. Ant.</button>
                     <button id="btn-preset-torsion_post" class="v3d-btn-preset {'active' if preset_init == 'torsion_post' else ''}" onclick="applyAtlasPreset('torsion_post')">Tors. Post.</button>
+                </div>
+                <div class="preset-category-group">
+                    <span class="preset-cat-label">LUMBAR:</span>
+                    <button id="btn-preset-lumbar_frs_d" class="v3d-btn-preset {'active' if preset_init == 'lumbar_frs_d' else ''}" onclick="applyAtlasPreset('lumbar_frs_d')">FRS D</button>
+                    <button id="btn-preset-lumbar_frs_i" class="v3d-btn-preset {'active' if preset_init == 'lumbar_frs_i' else ''}" onclick="applyAtlasPreset('lumbar_frs_i')">FRS I</button>
+                    <button id="btn-preset-lumbar_ers_d" class="v3d-btn-preset {'active' if preset_init == 'lumbar_ers_d' else ''}" onclick="applyAtlasPreset('lumbar_ers_d')">ERS D</button>
+                    <button id="btn-preset-lumbar_ers_i" class="v3d-btn-preset {'active' if preset_init == 'lumbar_ers_i' else ''}" onclick="applyAtlasPreset('lumbar_ers_i')">ERS I</button>
+                    <button id="btn-preset-lumbar_nsr" class="v3d-btn-preset {'active' if preset_init == 'lumbar_nsr' else ''}" onclick="applyAtlasPreset('lumbar_nsr')">NSR</button>
+                    <button id="btn-preset-lumbar_spondylolisthesis" class="v3d-btn-preset {'active' if preset_init == 'lumbar_spondylolisthesis' else ''}" onclick="applyAtlasPreset('lumbar_spondylolisthesis')">Espondilo L5</button>
                 </div>
             </div>"""
         if mostrar_ficha_didactica:
@@ -2568,6 +2680,21 @@ def generar_visor_3d_pelvis(
             let iliacoIzqMesh = null;
             let iliacoDerMesh = null;
 
+            // Nodo maqueta Columna Lumbar (L1-L5 / L5-S1)
+            let columnaLumbarGroup = new THREE.Group();
+            columnaLumbarGroup.name = "columna_lumbar";
+            let l5S1Group = new THREE.Group();
+            l5S1Group.name = "L5_S1";
+            let baseLumbarPos = new THREE.Vector3(0, 0.58, -0.09);
+
+            // Interpolación paramétrica para Columna Lumbar (L1-L5 / L5-S1)
+            let targetLumbarRotX = 0.0, currentLumbarRotX = 0.0;
+            let targetLumbarRotY = 0.0, currentLumbarRotY = 0.0;
+            let targetLumbarRotZ = 0.0, currentLumbarRotZ = 0.0;
+            let targetLumbarTransX = 0.0, currentLumbarTransX = 0.0;
+            let targetLumbarTransY = 0.0, currentLumbarTransY = 0.0;
+            let targetLumbarTransZ = 0.0, currentLumbarTransZ = 0.0;
+
             // Grupo raíz pélvico calibrado y nivelado
             let pelvisGroup = new THREE.Group();
             pelvisGroup.name = "pelvisGroup";
@@ -3281,6 +3408,9 @@ def generar_visor_3d_pelvis(
                     buildProceduralFallback();
                 }}
 
+                // Montar maqueta lumbar anatómica en la jerarquía
+                buildColumnaLumbarMesh();
+
                 // Anclar hitos anatómicos vinculados solidariamente a los huesos
                 attachLandmarksToBones();
 
@@ -3288,7 +3418,108 @@ def generar_visor_3d_pelvis(
                 centerPelvisModel();
             }}
 
+            function buildColumnaLumbarMesh() {{
+                // Limpiar nodos previos
+                while (columnaLumbarGroup.children.length > 0) {{
+                    columnaLumbarGroup.remove(columnaLumbarGroup.children[0]);
+                }}
+                while (l5S1Group.children.length > 0) {{
+                    l5S1Group.remove(l5S1Group.children[0]);
+                }}
+
+                // Material óseo lumbar y fibrocartílago discal
+                const lumbarBoneMat = boneMaterial.clone();
+                lumbarBoneMat.color.setHex(0xdcd5b8);
+                const discMat = new THREE.MeshStandardMaterial({{
+                    color: 0x64748b,
+                    roughness: 0.6,
+                    metalness: 0.1,
+                    transparent: true,
+                    opacity: 0.92
+                }});
+                const facetMat = new THREE.MeshStandardMaterial({{
+                    color: 0x38bdf8,
+                    emissive: 0x0284c7,
+                    emissiveIntensity: 0.25,
+                    roughness: 0.45
+                }});
+
+                // Niveles vertebrales lumbares (L5 en base articulando con S1 hasta L1)
+                const lumbarLevels = [
+                    {{ name: "L5", yOffset: 0.00, radius: 0.22, height: 0.07, isL5: true }},
+                    {{ name: "L4", yOffset: 0.11, radius: 0.21, height: 0.07, isL5: false }},
+                    {{ name: "L3", yOffset: 0.22, radius: 0.20, height: 0.07, isL5: false }},
+                    {{ name: "L2", yOffset: 0.33, radius: 0.19, height: 0.065, isL5: false }},
+                    {{ name: "L1", yOffset: 0.44, radius: 0.18, height: 0.065, isL5: false }}
+                ];
+
+                lumbarLevels.forEach(lvl => {{
+                    const vert = new THREE.Group();
+                    vert.name = "Vertebra_" + lvl.name;
+                    vert.position.set(0, lvl.yOffset, 0);
+
+                    // 1. Disco intervertebral subyacente
+                    const discGeom = new THREE.CylinderGeometry(lvl.radius * 0.95, lvl.radius * 0.98, 0.035, 24);
+                    discGeom.scale(1.15, 1, 0.9);
+                    const discMesh = new THREE.Mesh(discGeom, discMat);
+                    discMesh.position.set(0, -0.045, 0);
+                    vert.add(discMesh);
+
+                    // 2. Cuerpo vertebral lumbar arriñonado
+                    const bodyGeom = new THREE.CylinderGeometry(lvl.radius, lvl.radius * 0.98, lvl.height, 24);
+                    bodyGeom.scale(1.18, 1, 0.88);
+                    const bodyMesh = new THREE.Mesh(bodyGeom, lumbarBoneMat);
+                    vert.add(bodyMesh);
+
+                    // 3. Arco posterior y pedículos
+                    const archGeom = new THREE.TorusGeometry(lvl.radius * 0.55, 0.022, 8, 16, Math.PI * 1.1);
+                    archGeom.rotateX(Math.PI / 2);
+                    const archMesh = new THREE.Mesh(archGeom, lumbarBoneMat);
+                    archMesh.position.set(0, 0, -lvl.radius * 0.45);
+                    vert.add(archMesh);
+
+                    // 4. Apófisis espinosa prominente
+                    const spinousGeom = new THREE.BoxGeometry(0.03, 0.045, 0.13);
+                    const spinousMesh = new THREE.Mesh(spinousGeom, lumbarBoneMat);
+                    spinousMesh.position.set(0, -0.005, -lvl.radius * 0.85);
+                    vert.add(spinousMesh);
+
+                    // 5. Apófisis transversas bilaterales
+                    const transLGeom = new THREE.CylinderGeometry(0.016, 0.012, 0.14, 8);
+                    transLGeom.rotateZ(Math.PI / 2.3);
+                    const transL = new THREE.Mesh(transLGeom, lumbarBoneMat);
+                    transL.position.set(lvl.radius * 0.95, 0.01, -lvl.radius * 0.3);
+                    vert.add(transL);
+
+                    const transRGeom = transLGeom.clone();
+                    transRGeom.rotateZ(-Math.PI / 1.15);
+                    const transR = new THREE.Mesh(transRGeom, lumbarBoneMat);
+                    transR.position.set(-lvl.radius * 0.95, 0.01, -lvl.radius * 0.3);
+                    vert.add(transR);
+
+                    // 6. Carillas articulares facetarias
+                    const facetGeom = new THREE.SphereGeometry(0.02, 12, 12);
+                    const fL = new THREE.Mesh(facetGeom, facetMat);
+                    fL.position.set(lvl.radius * 0.45, 0.03, -lvl.radius * 0.55);
+                    vert.add(fL);
+                    const fR = new THREE.Mesh(facetGeom, facetMat);
+                    fR.position.set(-lvl.radius * 0.45, 0.03, -lvl.radius * 0.55);
+                    vert.add(fR);
+
+                    if (lvl.isL5) {{
+                        l5S1Group.add(vert);
+                    }} else {{
+                        columnaLumbarGroup.add(vert);
+                    }}
+                }});
+
+                columnaLumbarGroup.add(l5S1Group);
+                columnaLumbarGroup.position.copy(baseLumbarPos);
+                pelvisGroup.add(columnaLumbarGroup);
+            }}
+
             function buildProceduralFallback() {{
+                buildColumnaLumbarMesh();
                 const sacroGeom = new THREE.CylinderGeometry(0.35, 0.15, 1.2, 16);
                 sacroGeom.rotateX(Math.PI);
                 sacroMesh = new THREE.Mesh(sacroGeom, boneMaterial.clone());
@@ -3473,6 +3704,54 @@ def generar_visor_3d_pelvis(
                     mechanism: "Atrapamiento de la hemibase sacra izquierda en contra-nutación tras esfuerzo asimétrico en flexión de tronco.",
                     palpation: "• Hemi-base sacra izquierda: Proyectada hacia posterior en +Z y leve ascenso en +Y\\n• Sulcus Sacro Izquierdo: Plano y lleno\\n• ILA Derecho: Hundido hacia anterior y superior\\n• Maléolos: Maléolo izquierdo más alto en supino\\n• Spring Test: Bloqueo rígido franco en base sacra izquierda",
                     correction: "• Ajuste HVLA: Decúbito lateral con hemibase izquierda hacia arriba. PCP: Borde medial de EIPS izquierda en surco sacro. LOD: P-A + M-L de craneal a caudal.\\n• MET (Mitchell): Decúbito lateral derecho. Extensión isométrica de cadera izquierda al 25% por 7-10s."
+                }},
+                "lumbar_frs_d": {{
+                    title: "FRS Derecho (L1-L5)",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Mitchell: FRS Derecho | Fryette II: Flexión + Rotación D + Inclinación D homolateral",
+                    mechanism: "Flexión brusca de tronco combinada con torsión forzada derecha o esfuerzo de levantamiento asimétrico.",
+                    palpation: "• Apófisis transversa derecha: Más posterior y prominente en neutro y en flexión de tronco\\n• Apófisis espinosa: Desviada hacia la izquierda\\n• Dinámica en extensión (esfinge): La asimetría transversa empeora al no poder cerrar/imbricar la carilla izquierda\\n• Tejidos: Psoas mayor derecho tenso y acortado, Cuadrado Lumbar y Multífidos derechos en espasmo",
+                    correction: "• Puesta en tensión en rotación (Lumbar Roll para FRS): Decúbito lateral izquierdo con pie alojado en hueco poplíteo para abrir foramen. Vector rotatorio con inducción de extensión y desrotación izquierda.\\n• MET Lumbar (Mitchell): Contracción isométrica suave al 20% intentando rotar hacia la izquierda/flexionar por 7-10s. Relajación y ganancia pasiva hacia extensión y rotación izquierda."
+                }},
+                "lumbar_frs_i": {{
+                    title: "FRS Izquierdo (L1-L5)",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Mitchell: FRS Izquierdo | Fryette II: Flexión + Rotación I + Inclinación I homolateral",
+                    mechanism: "Flexión de tronco combinada con giro rápido hacia la izquierda o esfuerzo asimétrico.",
+                    palpation: "• Apófisis transversa izquierda: Posterior y prominente en flexión\\n• Apófisis espinosa: Desviada hacia la derecha\\n• Dinámica en extensión: La asimetría empeora drásticamente por restricción de cierre de la carilla articular derecha\\n• Tejidos: Psoas mayor izquierdo y Cuadrado Lumbar en espasmo",
+                    correction: "• Puesta en tensión en rotación (Lumbar Roll para FRS): Decúbito lateral derecho. Contacto mamilar en nivel lumbar. Vector rotatorio inductor de extensión.\\n• MET Lumbar (Mitchell): Contracción isométrica resistida de rotación derecha al 20% por 7-10s. Relajación y extensión/desrotación progresiva."
+                }},
+                "lumbar_ers_d": {{
+                    title: "ERS Derecho (L1-L5)",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Mitchell: ERS Derecho | Fryette II: Extensión + Rotación D + Inclinación D homolateral",
+                    mechanism: "Hiperextensión lumbar con rotación forzada derecha (saque deportivo, remate, levantamiento sobre cabeza).",
+                    palpation: "• Apófisis transversa derecha: Extraordinariamente prominente, rígida y dolorosa en flexión anterior de tronco\\n• Apófisis espinosa: Desviada a la izquierda\\n• Dinámica en extensión: La asimetría disminuye o se simetriza al converger ambas facetas\\n• Tejidos: Cuadrado Lumbar e iliocostal derechos severamente espasmódicos y acortados",
+                    correction: "• Puesta en tensión en rotación con flexión (Lumbar Roll para ERS): Decúbito lateral izquierdo con marcada flexión de caderas y rodillas (>90°) para focalizar la apertura facetaria. Vector rotatorio en flexión para desimbricar la faceta fija.\\n• MET Lumbar (Mitchell): Flexión lumbar y rotación izquierda; contracción isométrica extensora resistida al 20% por 7-10s. Relajación y aumento de flexión pasiva."
+                }},
+                "lumbar_ers_i": {{
+                    title: "ERS Izquierdo (L1-L5)",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Mitchell: ERS Izquierdo | Fryette II: Extensión + Rotación I + Inclinación I homolateral",
+                    mechanism: "Extensión forzada de columna con torsión izquierda mantenida o sobrecarga facetaria.",
+                    palpation: "• Apófisis transversa izquierda: Muy prominente y dolorosa en flexión anterior\\n• Apófisis espinosa: Desviada a la derecha\\n• Dinámica en extensión: Asimetría transversa disminuye al imbricar ambas facetas\\n• Tejidos: Cuadrado Lumbar izquierdo y multífidos en espasmo agudo",
+                    correction: "• Puesta en tensión en rotación con flexión (Lumbar Roll para ERS): Decúbito lateral derecho con triple flexión de miembros inferiores. Contacto mamilar izquierdo; impulso desimbricador en flexión.\\n• MET Lumbar (Mitchell): Flexión de caderas >90°; esfuerzo isométrico extensor suave al 20% por 7-10s. Relajación y apertura facetaria."
+                }},
+                "lumbar_nsr": {{
+                    title: "NSR Grupo Lumbar (L1-L5)",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Fryette I: NSR Grupo Lumbar | Disfunción Adaptativa Neutra Heterolateral",
+                    mechanism: "Compensación postural crónica ante dismetría de miembros inferiores, asimetría pélvica sacra/ilíaca o curva escoliótica funcional.",
+                    palpation: "• Afecta grupo de 3 o más vértebras lumbares en posición neutra\\n• Transversas prominentes en el lado de la convexidad\\n• La asimetría no se modifica sustancialmente ni en flexión ni en extensión de tronco\\n• Tejidos: Cuadrado Lumbar y psoas acortados en la concavidad; multífidos elongados en la convexidad",
+                    correction: "• Movilización articular segmentaria rítmica: Decúbito lateral con la concavidad hacia abajo apoyada sobre rollo lumbar para abrir la curva. Movilización oscilatoria grado III-IV.\\n• MET para Grupo Lumbar (Mitchell): Inclinación lateral hacia la convexidad; contracción isométrica suave hacia la concavidad al 20% por 7-10s. Elongación progresiva del lado cóncavo."
+                }},
+                "lumbar_spondylolisthesis": {{
+                    title: "Espondilolistesis / Inestabilidad L5-S1",
+                    category: "Disfunciones Lumbares (L1-L5)",
+                    listing: "Meyerding / Wiltse: Espondilolistesis / Inestabilidad Lumbosacra L5-S1",
+                    mechanism: "Defecto de la pars interarticularis (espondilolisis ístmica), estrés por hiperextensión repetitiva (gimnasia, ballet) o artrosis facetaria degenerativa.",
+                    palpation: "• Signo del escalón palpable (Step-off sign): Apófisis espinosa de L5 hundida/anteriorizada respecto a S1 con escalón en L4-L5\\n• Dolor marcado a la extensión activa/pasiva (Stork test positivo)\\n• Falsa hipermovilidad dolorosa en Spring test\\n• Tejidos: Espasmo protector bilateral de Psoas y erectores espinales lumbares",
+                    correction: "• CONTRAINDICACIÓN ABSOLUTA DE EMPUJE HVLA POSTERIOR-ANTERIOR (P-A) SOBRE L5. Prohibida hiperextensión forzada.\\n• Protocolo Conservador: Flexión descompresiva lumbosacra (postura de Williams), estabilización de zona neutra, MET suave en flexión para psoas y activación de transverso abdominal y glúteos mayores."
                 }}
             }};
 
@@ -3516,6 +3795,17 @@ def generar_visor_3d_pelvis(
                         {{ key: "sacro_ps_i", name: "Sacro Posterior Izquierdo (Unilateral / Postero-Superior)" }},
                         {{ key: "torsion_ant", name: "Torsión Sacra Anterior (R/R o L/L) (Fisiológica)" }},
                         {{ key: "torsion_post", name: "Torsión Sacra Posterior (R/L o L/R) (No Fisiológica)" }}
+                    ]
+                }},
+                "lumbar": {{
+                    name: "Disfunciones Lumbares (L1-L5 / L5-S1)",
+                    presets: [
+                        {{ key: "lumbar_frs_d", name: "FRS Derecho (Flex-Rot-Inc D)" }},
+                        {{ key: "lumbar_frs_i", name: "FRS Izquierdo (Flex-Rot-Inc I)" }},
+                        {{ key: "lumbar_ers_d", name: "ERS Derecho (Ext-Rot-Inc D)" }},
+                        {{ key: "lumbar_ers_i", name: "ERS Izquierdo (Ext-Rot-Inc I)" }},
+                        {{ key: "lumbar_nsr", name: "NSR Grupo Lumbar (Fryette I)" }},
+                        {{ key: "lumbar_spondylolisthesis", name: "Espondilolistesis / Inestabilidad L5-S1" }}
                     ]
                 }}
             }};
@@ -3615,6 +3905,8 @@ def generar_visor_3d_pelvis(
                 targetRotRight = 0.0; targetRotYRight = 0.0; targetTransYRight = 0.0; targetTransZRight = 0.0;
                 targetSacrumRotX = 0.0; targetSacrumRotY = 0.0; targetSacrumRotZ = 0.0;
                 targetSacrumPosX = 0.0; targetSacrumPosY = 0.0; targetSacrumPosZ = 0.0;
+                targetLumbarRotX = 0.0; targetLumbarRotY = 0.0; targetLumbarRotZ = 0.0;
+                targetLumbarTransX = 0.0; targetLumbarTransY = 0.0; targetLumbarTransZ = 0.0;
 
                 if (presetKey === 'neutral') {{
                     statusBadge.className = 'badge-status badge-neutral';
@@ -3861,6 +4153,48 @@ def generar_visor_3d_pelvis(
                         targetSacrumPosZ = 0.018;
                         hudInfo.innerHTML = `<span>⚡ <strong>Torsión Sacra Posterior (L/R):</strong> Eje oblicuo izquierdo (pivote base izq. y AIL der.). Rotación posterior de la base sacra derecha (sulcus der. lleno/rígido), AIL derecho anterior. Spring test duro (+).</span>`;
                     }}
+                }} else if (presetKey === 'lumbar_frs_d') {{
+                    statusBadge.textContent = '⚡ DEMO: FRS Derecho (L1-L5)';
+                    targetLumbarRotX = 0.08;
+                    targetLumbarRotY = 0.08;
+                    targetLumbarRotZ = -0.07;
+                    targetLumbarTransZ = 0.01;
+                    hudInfo.innerHTML = '<span>⚡ <strong>FRS Derecho (L1-L5):</strong> Flexión (+4.6°), Rotación axial derecha (+4.6°) e Inclinación homolateral (-4.0°). Faceta izquierda no cierra en extensión. Transversa derecha posterior en flexión.</span>';
+                }} else if (presetKey === 'lumbar_frs_i') {{
+                    statusBadge.textContent = '⚡ DEMO: FRS Izquierdo (L1-L5)';
+                    targetLumbarRotX = 0.08;
+                    targetLumbarRotY = -0.08;
+                    targetLumbarRotZ = 0.07;
+                    targetLumbarTransZ = 0.01;
+                    hudInfo.innerHTML = '<span>⚡ <strong>FRS Izquierdo (L1-L5):</strong> Flexión (+4.6°), Rotación axial izquierda (-4.6°) e Inclinación homolateral (+4.0°). Faceta derecha no cierra en extensión. Transversa izquierda posterior en flexión.</span>';
+                }} else if (presetKey === 'lumbar_ers_d') {{
+                    statusBadge.textContent = '⚡ DEMO: ERS Derecho (L1-L5)';
+                    targetLumbarRotX = -0.08;
+                    targetLumbarRotY = 0.08;
+                    targetLumbarRotZ = -0.07;
+                    targetLumbarTransZ = -0.01;
+                    hudInfo.innerHTML = '<span>⚡ <strong>ERS Derecho (L1-L5):</strong> Extensión (-4.6°), Rotación axial derecha (+4.6°) e Inclinación homolateral (-4.0°). Faceta izquierda no abre en flexión. Transversa derecha marcadamente posterior en flexión.</span>';
+                }} else if (presetKey === 'lumbar_ers_i') {{
+                    statusBadge.textContent = '⚡ DEMO: ERS Izquierdo (L1-L5)';
+                    targetLumbarRotX = -0.08;
+                    targetLumbarRotY = -0.08;
+                    targetLumbarRotZ = 0.07;
+                    targetLumbarTransZ = -0.01;
+                    hudInfo.innerHTML = '<span>⚡ <strong>ERS Izquierdo (L1-L5):</strong> Extensión (-4.6°), Rotación axial izquierda (-4.6°) e Inclinación homolateral (+4.0°). Faceta derecha no abre en flexión. Transversa izquierda marcadamente posterior en flexión.</span>';
+                }} else if (presetKey === 'lumbar_nsr') {{
+                    statusBadge.textContent = '⚡ DEMO: NSR Grupo Lumbar (Fryette I)';
+                    targetLumbarRotX = 0.0;
+                    targetLumbarRotY = 0.07;
+                    targetLumbarRotZ = 0.08;
+                    targetLumbarTransX = 0.015;
+                    hudInfo.innerHTML = '<span>⚡ <strong>NSR Grupo Lumbar (Fryette I):</strong> Disfunción adaptativa neutra heterolateral. Inclinación y rotación a lados opuestos sin bloqueo monoarticular. Transversas prominentes en convexidad.</span>';
+                }} else if (presetKey === 'lumbar_spondylolisthesis') {{
+                    statusBadge.textContent = '⚡ DEMO: Espondilolistesis / Inestabilidad L5-S1';
+                    targetLumbarTransZ = 0.06;
+                    targetLumbarRotX = -0.05;
+                    targetLumbarRotY = 0.0;
+                    targetLumbarRotZ = 0.0;
+                    hudInfo.innerHTML = '<span>⚡ <strong>Espondilolistesis L5-S1:</strong> Cizallamiento sagital anterior de L5 sobre S1 (+0.06 u). Signo del escalón palpable, inestabilidad lumbosacra y espasmo protector de psoas y erectores.</span>';
                 }}
 
                 updateDidacticCard(presetKey);
@@ -3875,8 +4209,12 @@ def generar_visor_3d_pelvis(
 
                 const effSide = side || currentPatientSide || 'Derecho';
                 const isR = (effSide === 'Derecho');
+                const isLumbar = presetKey.startsWith('lumbar_');
                 const isBilateral = (presetKey === 'sacro_flexion' || presetKey === 'sacro_extension' || presetKey === 'neutral');
-                const sideText = isBilateral ? (presetKey === 'neutral' ? 'Simétrica Bilateral' : 'Bilateral') : effSide;
+                let sideText = isBilateral ? (presetKey === 'neutral' ? 'Simétrica Bilateral' : 'Bilateral') : effSide;
+                if (isLumbar) {{
+                    sideText = presetKey === 'lumbar_spondylolisthesis' ? 'Segmento L5-S1' : (presetKey === 'lumbar_nsr' ? 'Grupo Multivertebral' : effSide);
+                }}
 
                 let displayTitle = data.nombre_clinico;
                 let displayListing = data.listing || 'N/D';
@@ -4220,6 +4558,22 @@ def generar_visor_3d_pelvis(
                     sacroMesh.position.x = bPos.x + currentSacrumPosX;
                     sacroMesh.position.y = bPos.y + currentSacrumPosY;
                     sacroMesh.position.z = bPos.z + currentSacrumPosZ;
+                }}
+
+                // Interpolación fluida (lerp) para maqueta Columna Lumbar (L1-L5 / L5-S1)
+                currentLumbarRotX += (targetLumbarRotX - currentLumbarRotX) * 0.08;
+                currentLumbarRotY += (targetLumbarRotY - currentLumbarRotY) * 0.08;
+                currentLumbarRotZ += (targetLumbarRotZ - currentLumbarRotZ) * 0.08;
+                currentLumbarTransX += (targetLumbarTransX - currentLumbarTransX) * 0.08;
+                currentLumbarTransY += (targetLumbarTransY - currentLumbarTransY) * 0.08;
+                currentLumbarTransZ += (targetLumbarTransZ - currentLumbarTransZ) * 0.08;
+                if (columnaLumbarGroup) {{
+                    columnaLumbarGroup.rotation.x = currentLumbarRotX;
+                    columnaLumbarGroup.rotation.y = currentLumbarRotY;
+                    columnaLumbarGroup.rotation.z = currentLumbarRotZ;
+                    columnaLumbarGroup.position.x = baseLumbarPos.x + currentLumbarTransX;
+                    columnaLumbarGroup.position.y = baseLumbarPos.y + currentLumbarTransY;
+                    columnaLumbarGroup.position.z = baseLumbarPos.z + currentLumbarTransZ;
                 }}
 
                 // Persistir transformaciones actuales en sessionStorage para transición continua sin saltos ni pantalla negra
@@ -5399,10 +5753,12 @@ def render_ficha_biomecanica_didactica(
     lado = lado_override or (palpacion.lado_restriccion.value if palpacion else "Derecho")
     if preset_actual in ["sacro_flexion", "sacro_extension"]:
         lado_str = "Bilateral"
+    elif preset_actual.startswith("lumbar_") or ck_key.startswith("LUMBAR_"):
+        lado_str = "Complejo Lumbopélvico"
     else:
         lado_str = lado
 
-    titulo_mostrar = diagnostico.titulo if (diagnostico and not preset_key) else f"{info_clinica.get('nombre_clinico', 'Disfunción')} — Hemipelvis {lado_str}"
+    titulo_mostrar = diagnostico.titulo if (diagnostico and not preset_key) else f"{info_clinica.get('nombre_clinico', 'Disfunción')} — {lado_str}"
 
     st.markdown(f"""
     <div class="clinical-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-left: 5px solid #0284c7; padding: 18px 24px; margin-top: 18px; margin-bottom: 20px; color: #f8fafc; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,0.2);">
@@ -5437,6 +5793,7 @@ def render_ficha_biomecanica_didactica(
                 <li><strong>Tub. Isquiática:</strong> {crit.get('isquion', 'N/A')}</li>
                 <li><strong>Sínfisis Púbica:</strong> {crit.get('sinfisis', 'N/A')}</li>
                 <li><strong>Surco Sacro / AIL:</strong> {crit.get('surco_sacro', 'Simétrico')} / {crit.get('ail', 'Simétrico')}</li>
+                {f"<li><strong>Palpación Vertebral:</strong> {crit['palpacion_clinica']}</li>" if crit.get('palpacion_clinica') else ""}
             </ul>
         </div>
         """, unsafe_allow_html=True)

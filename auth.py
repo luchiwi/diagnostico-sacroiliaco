@@ -81,10 +81,33 @@ def descifrar_token_sesion(
         return None
 
 
+def es_error_red_dns(err: Exception) -> bool:
+    """Detecta si la excepción corresponde a un fallo de red o resolución DNS ([Errno -2])."""
+    err_msg = str(err).lower()
+    tipo = type(err).__name__.lower()
+    return (
+        "errno -2" in err_msg
+        or "name or service not known" in err_msg
+        or "getaddrinfo failed" in err_msg
+        or "errno 11001" in err_msg
+        or "nodename nor servname provided" in err_msg
+        or "connecterror" in tipo
+        or "networkerror" in tipo
+        or "timeoutexception" in tipo
+        or "dns" in err_msg
+    )
+
+
+MSG_ERROR_CONEXION_SECRETS = (
+    "Error de conexión con el servidor de autenticación. "
+    "Verifique la URL de conexión en los secrets de Streamlit."
+)
+
+
 def init_supabase() -> Client:
-    """Inicializa el cliente Supabase con soporte robusto de certificados SSL en Windows."""
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+    """Inicializa el cliente Supabase con soporte robusto de certificados SSL en Windows y limpieza de URL."""
+    url = str(st.secrets.get("SUPABASE_URL", "")).strip().rstrip("/")
+    key = str(st.secrets.get("SUPABASE_KEY", "")).strip()
     try:
         ssl_ctx = ssl.create_default_context()
         http_client = httpx.Client(verify=ssl_ctx)
@@ -171,13 +194,29 @@ def _limpiar_storage_js():
 
 
 def _intentar_recuperar_localstorage_js():
-    """Si el usuario abrió la URL limpia sin query param, comprueba localStorage para autorecuperar."""
+    """Si el usuario abrió la URL limpia sin query param, comprueba localStorage o hash de recuperación."""
     if st.session_state.get("logout_requested"):
         return
     components.html(
         f"""
         <script>
         try {{
+            if (window.location.hash && window.location.hash.includes("access_token=")) {{
+                const hashStr = window.location.hash.startsWith("#") ? window.location.hash.substring(1) : window.location.hash;
+                const p = new URLSearchParams(hashStr);
+                const at = p.get("access_token");
+                const rt = p.get("refresh_token") || "";
+                const ty = p.get("type") || "";
+                if (at) {{
+                    const u = new URL(window.location.href);
+                    u.hash = "";
+                    u.searchParams.set("sb_access_token", at);
+                    if (rt) u.searchParams.set("sb_refresh_token", rt);
+                    if (ty) u.searchParams.set("sb_auth_type", ty);
+                    window.location.replace(u.toString());
+                    return;
+                }}
+            }}
             const tok = localStorage.getItem("{AUTH_COOKIE_NAME}");
             if (tok && !window.location.search.includes("{AUTH_TOKEN_PARAM}=")) {{
                 const u = new URL(window.location.href);
@@ -197,9 +236,11 @@ def cerrar_sesion():
     st.session_state["user"] = None
     st.session_state["session"] = None
     st.session_state["logout_requested"] = True
+    st.session_state["password_recovery_mode"] = False
 
-    if AUTH_TOKEN_PARAM in st.query_params:
-        del st.query_params[AUTH_TOKEN_PARAM]
+    for param in [AUTH_TOKEN_PARAM, "code", "sb_access_token", "sb_refresh_token", "sb_auth_type"]:
+        if param in st.query_params:
+            del st.query_params[param]
 
     try:
         supabase = init_supabase()
@@ -211,8 +252,22 @@ def cerrar_sesion():
     st.rerun()
 
 
+def cambiar_contrasena(nueva_clave: str) -> Tuple[bool, str]:
+    """Actualiza la contraseña del usuario actualmente autenticado en Supabase."""
+    if not nueva_clave or len(nueva_clave) < 6:
+        return False, "La contraseña debe tener al menos 6 caracteres."
+    try:
+        supabase = init_supabase()
+        supabase.auth.update_user({"password": nueva_clave})
+        return True, "Contraseña actualizada exitosamente."
+    except Exception as e:
+        if es_error_red_dns(e):
+            return False, MSG_ERROR_CONEXION_SECRETS
+        return False, f"Error al actualizar la contraseña: {e}"
+
+
 def _render_sidebar_user():
-    """Muestra información del usuario y botón de cerrar sesión en la barra lateral."""
+    """Muestra información del usuario, cambio de contraseña y botón de cerrar sesión en la barra lateral."""
     user = st.session_state.get("user")
     if not user:
         return
@@ -230,6 +285,26 @@ def _render_sidebar_user():
             """,
             unsafe_allow_html=True,
         )
+
+        is_rec = bool(st.session_state.get("password_recovery_mode", False))
+        with st.expander("🔑 Cambiar Contraseña", expanded=is_rec):
+            if is_rec:
+                st.info("⚠️ Sesión iniciada por recuperación. Define tu nueva contraseña:")
+            sb_p1 = st.text_input("Nueva contraseña", type="password", key="sb_pass1", placeholder="Mínimo 6 caracteres")
+            sb_p2 = st.text_input("Confirmar contraseña", type="password", key="sb_pass2", placeholder="Repite contraseña")
+            if st.button("Guardar Contraseña", use_container_width=True, key="sb_btn_save_pass"):
+                if not sb_p1:
+                    st.warning("Ingresa la nueva contraseña.")
+                elif sb_p1 != sb_p2:
+                    st.error("Las contraseñas no coinciden.")
+                else:
+                    ok, msg = cambiar_contrasena(sb_p1)
+                    if ok:
+                        st.session_state["password_recovery_mode"] = False
+                        st.success(msg)
+                    else:
+                        st.error(msg)
+
         if st.button(
             "🚪 Cerrar Sesión", use_container_width=True, key="btn_logout_sidebar"
         ):
@@ -267,6 +342,9 @@ def render_user_badge():
         ):
             cerrar_sesion()
 
+    if st.session_state.get("password_recovery_mode"):
+        st.warning("🔑 **Modo de recuperación activo**: Por favor actualiza tu contraseña en el menú lateral para asegurar tu cuenta.")
+
 
 def render_auth_screen() -> bool:
     """Muestra la pantalla de acceso o restaura la sesión persistente activa.
@@ -278,8 +356,10 @@ def render_auth_screen() -> bool:
         st.session_state["logout_requested"] = False
         st.session_state["user"] = None
         st.session_state["session"] = None
-        if AUTH_TOKEN_PARAM in st.query_params:
-            del st.query_params[AUTH_TOKEN_PARAM]
+        st.session_state["password_recovery_mode"] = False
+        for param in [AUTH_TOKEN_PARAM, "code", "sb_access_token", "sb_refresh_token", "sb_auth_type"]:
+            if param in st.query_params:
+                del st.query_params[param]
         _limpiar_storage_js()
 
     # 1. Verificar si ya existe una sesión en memoria
@@ -287,7 +367,52 @@ def render_auth_screen() -> bool:
         _render_sidebar_user()
         return True
 
-    # 2. Intentar restaurar sesión persistente desde query_params o cookies HTTP
+    # 2. Intercambio de código PKCE (?code=...) desde enlace de correo
+    if "code" in st.query_params:
+        auth_code = st.query_params.get("code")
+        try:
+            supabase = init_supabase()
+            res = supabase.auth.exchange_code_for_session({"auth_code": auth_code})
+            if res and res.user:
+                st.session_state["user"] = res.user
+                st.session_state["session"] = res.session
+                st.session_state["password_recovery_mode"] = True
+                token = generar_token_sesion(res.session, res.user)
+                st.query_params[AUTH_TOKEN_PARAM] = token
+                _guardar_storage_js(token)
+                del st.query_params["code"]
+                _render_sidebar_user()
+                return True
+        except Exception:
+            pass
+
+    # 2.1 Enlace de recuperación implícito redirigido desde hash JS (sb_access_token)
+    if "sb_access_token" in st.query_params:
+        at = st.query_params.get("sb_access_token")
+        rt = st.query_params.get("sb_refresh_token", "")
+        ty = st.query_params.get("sb_auth_type", "")
+        try:
+            supabase = init_supabase()
+            res = supabase.auth.set_session(at, rt or "")
+            if res and res.user:
+                st.session_state["user"] = res.user
+                st.session_state["session"] = res.session
+                if ty == "recovery":
+                    st.session_state["password_recovery_mode"] = True
+                token = generar_token_sesion(res.session, res.user)
+                st.query_params[AUTH_TOKEN_PARAM] = token
+                _guardar_storage_js(token)
+                del st.query_params["sb_access_token"]
+                if "sb_refresh_token" in st.query_params:
+                    del st.query_params["sb_refresh_token"]
+                if "sb_auth_type" in st.query_params:
+                    del st.query_params["sb_auth_type"]
+                _render_sidebar_user()
+                return True
+        except Exception:
+            pass
+
+    # 2.2 Intentar restaurar sesión persistente desde query_params o cookies HTTP
     token_candidato = st.query_params.get(AUTH_TOKEN_PARAM)
 
     # Búsqueda secundaria en cookies HTTP (Streamlit 1.64+)
@@ -338,7 +463,10 @@ def render_auth_screen() -> bool:
     try:
         supabase = init_supabase()
     except Exception as e:
-        st.error(f"Error al conectar con Supabase: {e}")
+        if es_error_red_dns(e):
+            st.error(MSG_ERROR_CONEXION_SECRETS)
+        else:
+            st.error(f"Error al conectar con Supabase: {e}")
         return False
 
     # Verificar si hay token en localStorage (caso de navegación a raíz limpia)
@@ -357,21 +485,25 @@ def render_auth_screen() -> bool:
     _, col, _ = st.columns([1, 1.4, 1])
 
     with col:
+        opciones = ["Iniciar Sesión", "Registrarse", "Recuperar Contraseña"]
         modo = st.radio(
             "Acción",
-            ["Iniciar Sesión", "Registrarse"],
+            opciones,
             horizontal=True,
             label_visibility="collapsed",
-        )
-        email = st.text_input("Correo Electrónico", placeholder="nombre@ejemplo.com")
-        password = st.text_input(
-            "Contraseña", type="password", placeholder="Mínimo 6 caracteres"
         )
 
         st.markdown("<br>", unsafe_allow_html=True)
 
         if modo == "Iniciar Sesión":
-            if st.button("Ingresar", type="primary", use_container_width=True):
+            email = st.text_input("Correo Electrónico", placeholder="nombre@ejemplo.com", key="auth_email_login")
+            password = st.text_input(
+                "Contraseña", type="password", placeholder="Mínimo 6 caracteres", key="auth_pass_login"
+            )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            if st.button("Ingresar", type="primary", use_container_width=True, key="btn_login_submit"):
                 if not email or not password:
                     st.warning("Ingresa tu correo y contraseña.")
                 else:
@@ -381,6 +513,7 @@ def render_auth_screen() -> bool:
                         )
                         st.session_state["user"] = res.user
                         st.session_state["session"] = res.session
+                        st.session_state["password_recovery_mode"] = False
 
                         # Generar y persistir token cifrado
                         token = generar_token_sesion(res.session, res.user)
@@ -390,14 +523,29 @@ def render_auth_screen() -> bool:
                         st.success("Acceso concedido.")
                         st.rerun()
                     except Exception as err:
-                        st.error(f"Credenciales no válidas: {err}")
+                        if es_error_red_dns(err):
+                            st.error(MSG_ERROR_CONEXION_SECRETS)
+                        else:
+                            st.error(f"Credenciales no válidas: {err}")
 
-        else:
-            if st.button("Crear Cuenta", type="primary", use_container_width=True):
-                if not email or not password:
+        elif modo == "Registrarse":
+            email = st.text_input("Correo Electrónico", placeholder="nombre@ejemplo.com", key="auth_email_reg")
+            password = st.text_input(
+                "Contraseña", type="password", placeholder="Mínimo 6 caracteres", key="auth_pass_reg"
+            )
+            confirm_password = st.text_input(
+                "Confirmar Contraseña", type="password", placeholder="Repite tu contraseña", key="auth_pass_reg_conf"
+            )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            if st.button("Crear Cuenta", type="primary", use_container_width=True, key="btn_register_submit"):
+                if not email or not password or not confirm_password:
                     st.warning("Completa todos los campos.")
                 elif len(password) < 6:
                     st.warning("La contraseña debe tener al menos 6 caracteres.")
+                elif password != confirm_password:
+                    st.error("Las contraseñas no coinciden.")
                 else:
                     try:
                         res = supabase.auth.sign_up(
@@ -407,6 +555,87 @@ def render_auth_screen() -> bool:
                             "Cuenta registrada. Si Supabase requiere confirmación de email, revisa tu bandeja de entrada."
                         )
                     except Exception as err:
-                        st.error(f"Error en registro: {err}")
+                        if es_error_red_dns(err):
+                            st.error(MSG_ERROR_CONEXION_SECRETS)
+                        else:
+                            st.error(f"Error en registro: {err}")
+
+        else:  # "Recuperar Contraseña"
+            st.markdown(
+                """
+                <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; margin-bottom: 14px;">
+                    <div style="font-weight: 600; color: #38bdf8; font-size: 0.95rem; margin-bottom: 2px;">Recuperar Contraseña</div>
+                    <div style="color: #94a3b8; font-size: 0.83rem;">
+                        Ingresa el correo asociado a tu cuenta para recibir las instrucciones de recuperación.
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            rec_email = st.text_input("Correo Registrado", placeholder="nombre@ejemplo.com", key="rec_correo_registrado")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            if st.button("Enviar enlace de recuperación", type="primary", use_container_width=True, key="btn_enviar_recuperacion"):
+                if not rec_email:
+                    st.warning("Por favor ingrese su correo electrónico registrado.")
+                elif "@" not in rec_email or "." not in rec_email:
+                    st.warning("Por favor ingrese una dirección de correo válida.")
+                else:
+                    try:
+                        email_clean = rec_email.strip()
+                        if hasattr(supabase.auth, "reset_password_email"):
+                            supabase.auth.reset_password_email(email_clean)
+                        else:
+                            supabase.auth.reset_password_for_email(email_clean)
+                        st.success(
+                            f"Se enviaron las instrucciones de recuperación a su correo electrónico ({email_clean}). "
+                            "Por favor revise su bandeja de entrada y la carpeta de correo no deseado (spam)."
+                        )
+                    except Exception as err:
+                        if es_error_red_dns(err):
+                            st.error(MSG_ERROR_CONEXION_SECRETS)
+                        else:
+                            st.error(f"Error al enviar correo de recuperación: {err}")
+
+            with st.expander("🔑 ¿Ya tienes un código o token de recuperación?"):
+                otp_email = st.text_input("Confirmar Correo Electrónico", value=rec_email, key="otp_email_exp")
+                otp_code = st.text_input("Código de Verificación (OTP) o Token", placeholder="Ej: 123456", key="otp_code_exp")
+                new_pass = st.text_input("Nueva Contraseña", type="password", placeholder="Mínimo 6 caracteres", key="otp_pass1_exp")
+                new_pass_conf = st.text_input("Confirmar Nueva Contraseña", type="password", placeholder="Repite la contraseña", key="otp_pass2_exp")
+
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("Restablecer Contraseña e Ingresar", key="btn_otp_exp_submit", use_container_width=True):
+                    if not otp_email or not otp_code or not new_pass or not new_pass_conf:
+                        st.warning("Por favor completa todos los campos.")
+                    elif len(new_pass) < 6:
+                        st.warning("La nueva contraseña debe tener al menos 6 caracteres.")
+                    elif new_pass != new_pass_conf:
+                        st.error("Las contraseñas no coinciden.")
+                    else:
+                        try:
+                            res = supabase.auth.verify_otp({
+                                "email": otp_email.strip(),
+                                "token": otp_code.strip(),
+                                "type": "recovery"
+                            })
+                            if res and res.user:
+                                supabase.auth.update_user({"password": new_pass})
+                                st.session_state["user"] = res.user
+                                st.session_state["session"] = res.session
+                                st.session_state["password_recovery_mode"] = False
+                                token = generar_token_sesion(res.session, res.user)
+                                st.query_params[AUTH_TOKEN_PARAM] = token
+                                _guardar_storage_js(token)
+                                st.success("🎉 ¡Contraseña restablecida exitosamente! Ingresando a la suite...")
+                                st.rerun()
+                            else:
+                                st.error("No fue posible validar el código. Comprueba que sea correcto.")
+                        except Exception as err:
+                            if es_error_red_dns(err):
+                                st.error(MSG_ERROR_CONEXION_SECRETS)
+                            else:
+                                st.error(f"Error al verificar el código: {err}")
 
     return False

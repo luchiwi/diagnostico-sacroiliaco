@@ -812,8 +812,335 @@ CLINICAL_KNOWLEDGE_BASE: Dict[str, Any] = {
                 "Glúteo mayor en rango funcional completo"
             ],
             "criterios_retorno": "Simetría palpatoria de ambos ILA en prono y bipedestación con resolución de la rigidez en base sacra."
+        }    },
+
+    # =========================================================================
+    # 6. DISFUNCIONES LUMBARES (L1-L5 / L5-S1) - COMPLEJO LUMBOPÉLVICO
+    # =========================================================================
+    "LUMBAR_FRS_D": {
+        "nombre_clinico": "FRS Derecho (L1-L5) — Flexión-Rotación-Inclinación Derecha",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Acoplamiento Facetario Homolateral Fryette II (Flexión + Rotación D + Inclinación D)",
+        "criterios_diagnosticos": {
+            "eias": "Neutra / Discreta adaptación funcional secundaria",
+            "eips": "Neutra / Sin asimetría coxal primaria",
+            "cresta": "Discreto ascenso adaptativo homolateral por tensión miofascial",
+            "isquion": "Nivelado",
+            "sinfisis": "Alineada / Neutra",
+            "surco_sacro": "Adaptativo lumbosacro (sin fijación sacra primaria)",
+            "ail": "Simétrico",
+            "maleolo_supino": "Simétrico o mínima falsa pierna funcional",
+            "long_sitting": "Sin inversión rotacional coxal",
+            "pierna_supino_prono": "Simetría funcional de extremidades",
+            "spring_test": "Conservado con restricción localizada lumbosacra",
+            "tejidos_blandos": "Espasmo marcado en Psoas mayor derecho, Cuadrado Lumbar homolateral y Multífidos segmentarios derechos; ligamento iliolumbar y supraespinoso bajo tensión",
+            "palpacion_clinica": "Apófisis transversa derecha notablemente más posterior y prominente en posición neutra y en flexión de tronco. Apófisis espinosa desviada hacia la izquierda. Al llevar el raquis a extensión (decúbito prono en esfinge), la asimetría transversa empeora severamente al no poder descender la carilla articular izquierda.",
+            "dinamica_facetaria": "Restricción de cierre (imbricación) de la carilla articular izquierda en extensión. La faceta articular derecha permanece abierta/en flexión, imposibilitando la convergencia bilateral.",
+            "hallazgos": "Transversa derecha posterior en flexión, espinosa a la izquierda, carilla izquierda no cierra en extensión, Psoas e iliolumbar derechos hipertónicos."
+        },
+        "ajuste_articular": {
+            "tecnica": "Puesta en Tensión en Rotación (Lumbar Roll / Side-Posture para FRS)",
+            "posicion_paciente": "Decúbito lateral izquierdo (lado de la faceta abierta/cerrada hacia arriba). Cadera y rodilla inferiores extendidas, extremidad superior flexionada con pie en hueco poplíteo para abrir el foramen y focalizar la palanca en el segmento lumbar afectado.",
+            "pcc": "Pisiforme / antebrazo en contacto mamilar / proceso transverso.",
+            "pcp": "Apófisis mamilar / aspecto lateral de la apófisis espinosa del nivel lumbar afectado.",
+            "linea_correccion": "Vector rotatorio con palanca en extensión relativa (desrotación izquierda e inducción de extensión/cierre facetario). Empuje de posterior a anterior y de caudal a craneal.",
+            "advertencia": "Monitorear síntomas radiculares. Prohibida manipulación en rotación forzada si existe hernia discal aguda extruida foraminal."
+        },
+        "tecnica_met": {
+            "nombre": "MET Lumbar de Fred Mitchell Sr. para FRS Derecho",
+            "posicion": "Decúbito lateral izquierdo. El clínico introduce extensión lumbar desde los miembros inferiores hasta palpar el movimiento en el segmento disfuncional; luego induce rotación de tronco hacia la derecha hasta la barrera motriz.",
+            "musculo_motor": "Multífidos rotadores izquierdos y Psoas mayor derecho.",
+            "accion": "El paciente realiza una contracción isométrica suave al 20% intentando rotar el tronco hacia la izquierda o flexionar contra la resistencia manual fija del clínico por 7-10 s.",
+            "fase_post": "En la relajación completa de 3-5 s, el clínico acompaña el segmento hacia una mayor extensión y rotación izquierda hasta la nueva barrera motriz (3 a 5 ciclos)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Psoas mayor derecho (liberación fascial profunda en fosa ilíaca/abdomen)",
+                "Cuadrado lumbar derecho (técnica de Jones / puntos gatillo miofasciales)",
+                "Multífidos lumbares segmentarios derechos (descarga con compresión isquémica)",
+                "Fascia toracolumbar y ligamento iliolumbar ipsilateral"
+            ],
+            "precaucion_reactiva": "Descartar pinzamiento facetario agudo o radiculopatía foraminal L4-L5/L5-S1 antes de aplicar tracción en extensión.",
+            "activar": [
+                "Transverso del abdomen con control de presión intraabdominal (PIA)",
+                "Multífidos lumbares profundos contralaterales (izquierdos)",
+                "Glúteo mayor homolateral en cadena cinética cerrada",
+                "Disociación lumbopélvica en cuadrupedia (Bird-Dog neutro)"
+            ],
+            "criterios_retorno": "Simetría palpatoria de transversas en flexión y extensión activa completa sin dolor facetario ni espasmo del psoas."
+        }
+    },
+
+    "LUMBAR_FRS_I": {
+        "nombre_clinico": "FRS Izquierdo (L1-L5) — Flexión-Rotación-Inclinación Izquierda",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Acoplamiento Facetario Homolateral Fryette II (Flexión + Rotación I + Inclinación I)",
+        "criterios_diagnosticos": {
+            "eias": "Neutra / Adaptativa secundaria",
+            "eips": "Neutra / Sin asimetría primaria ilíaca",
+            "cresta": "Discreto ascenso adaptativo izquierdo por hipertonía del cuadrado lumbar",
+            "isquion": "Nivelado",
+            "sinfisis": "Alineada / Neutra",
+            "surco_sacro": "Adaptativo simétrico",
+            "ail": "Simétrico",
+            "maleolo_supino": "Simétrico",
+            "long_sitting": "Sin inversión dismétrica",
+            "pierna_supino_prono": "Longitudes simétricas",
+            "spring_test": "Conservado con rigidez focal lumbosacra izquierda",
+            "tejidos_blandos": "Espasmo marcado en Psoas mayor izquierdo, Cuadrado Lumbar homolateral y Multífidos segmentarios izquierdos; tensión en ligamentos supraespinoso e interespinoso",
+            "palpacion_clinica": "Apófisis transversa izquierda posteriorizada y prominente en neutro y en flexión de tronco. Apófisis espinosa rotada hacia la derecha. Al evaluar en extensión (esfinge o decúbito prono), la prominencia transversa izquierda aumenta notablemente por incapacidad de la carilla articular derecha de cerrar e imbricar.",
+            "dinamica_facetaria": "Restricción de cierre (imbricación) de la carilla articular derecha en extensión. La carilla izquierda se mantiene abierta fija en flexión.",
+            "hallazgos": "Transversa izquierda posterior en flexión, espinosa a la derecha, carilla derecha no cierra en extensión, Psoas y multífidos izquierdos hipertónicos."
+        },
+        "ajuste_articular": {
+            "tecnica": "Puesta en Tensión en Rotación (Lumbar Roll / Side-Posture para FRS)",
+            "posicion_paciente": "Decúbito lateral derecho (lado de la restricción facetaria hacia arriba). Flexión controlada de cadera superior con pie alojado en hueco poplíteo para abrir el foramen intervertebral.",
+            "pcc": "Pisiforme / eminencia hipotenar con soporte en antebrazo.",
+            "pcp": "Apófisis mamilar / proceso transverso del nivel lumbar en disfunción.",
+            "linea_correccion": "Vector rotatorio con inducción de extensión y desrotación derecha. Empuje de posterior a anterior y de caudal a cefálico.",
+            "advertencia": "Verificar tolerancia neurológica en miembros inferiores; no forzar la rotación si desencadena dolor ciático irradiado."
+        },
+        "tecnica_met": {
+            "nombre": "MET Lumbar de Fred Mitchell Sr. para FRS Izquierdo",
+            "posicion": "Decúbito lateral derecho. El terapeuta posiciona el raquis en extensión relativa hasta el segmento diana y rota el tronco hacia la izquierda hasta contactar la barrera motriz.",
+            "musculo_motor": "Multífidos rotadores derechos y Psoas mayor izquierdo.",
+            "accion": "El paciente realiza contracción isométrica al 20% intentando rotar hacia la derecha contra resistencia manual firme por 7-10 s.",
+            "fase_post": "En relajación (3 s), guiar suavemente el tronco hacia mayor rotación derecha y extensión pasiva ganando la barrera motriz (3 a 5 repeticiones)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Psoas mayor izquierdo",
+                "Cuadrado lumbar izquierdo",
+                "Multífidos segmentarios lumbares izquierdos",
+                "Ligamento iliolumbar izquierdo"
+            ],
+            "precaucion_reactiva": "Evitar manipulaciones de empuje de alta velocidad en presencia de discopatía lumbosacra con componente inflamatorio agudo.",
+            "activar": [
+                "Transverso del abdomen y oblicuo interno",
+                "Multífidos lumbares profundos derechos",
+                "Glúteo mayor izquierdo en cadena cerrada",
+                "Estabilidad en bipedestación con control motor antirrotacional"
+            ],
+            "criterios_retorno": "Extensión lumbar activa simétrica sin apofisalgia transversa ni bloqueo articular en rotación."
+        }
+    },
+
+    "LUMBAR_ERS_D": {
+        "nombre_clinico": "ERS Derecho (L1-L5) — Extensión-Rotación-Inclinación Derecha",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Acoplamiento Facetario Homolateral Fryette II (Extensión + Rotación D + Inclinación D)",
+        "criterios_diagnosticos": {
+            "eias": "Neutra / Adaptativa",
+            "eips": "Neutra",
+            "cresta": "Nivelada o discreta elevación ipsilateral",
+            "isquion": "Nivelado",
+            "sinfisis": "Alineada",
+            "surco_sacro": "Adaptativo simétrico",
+            "ail": "Simétrico",
+            "maleolo_supino": "Simétrico",
+            "long_sitting": "Sin dismetría dinámica coxal",
+            "pierna_supino_prono": "Simétrico en supino y prono",
+            "spring_test": "Positivo rígido focal en el segmento lumbosacro derecho",
+            "tejidos_blandos": "Espasmo severo y acortamiento del Cuadrado Lumbar derecho, Psoas mayor derecho en tensión reactiva, Multífidos homolaterales e iliocostal; ligamento iliolumbar y ligamento longitudinal anterior bajo alta tensión",
+            "palpacion_clinica": "La apófisis transversa derecha se palpa posteriorizada en posición neutra y se vuelve extraordinariamente prominente, rígida y dolorosa al solicitar flexión anterior de tronco. Apófisis espinosa desviada hacia la izquierda. En extensión completa (posición de esfinge), la asimetría transversa disminuye o se simetriza.",
+            "dinamica_facetaria": "Restricción de apertura (desimbricación / divergencia) de la carilla articular izquierda en flexión. La carilla derecha se encuentra fija en imbricación/cierre en extensión.",
+            "hallazgos": "Transversa derecha marcadamente posterior en flexión, asimetría que mejora en extensión, espinosa a la izquierda, carilla izquierda no abre en flexión, Cuadrado Lumbar y multífidos derechos espásticos."
+        },
+        "ajuste_articular": {
+            "tecnica": "Puesta en Tensión en Rotación con Flexión (Lumbar Roll para ERS)",
+            "posicion_paciente": "Decúbito lateral izquierdo (faceta imbricada derecha hacia arriba). Marcada flexión de ambas caderas y rodillas hasta abrir e imbricar el segmento superior, focalizando la flexión en la vértebra disfuncional.",
+            "pcc": "Pisiforme / contacto mamilar del terapeuta.",
+            "pcp": "Apófisis mamilar derecha / borde inferior del proceso transverso.",
+            "linea_correccion": "Vector rotatorio inducido en flexión y desrotación izquierda para forzar la apertura (desimbricación) de la carilla posterior. Empuje de posterior a anterior y de craneal a caudal.",
+            "advertencia": "No introducir hiperextensión durante el impulso; la maniobra debe realizarse en estricta flexión lumbopélvica."
+        },
+        "tecnica_met": {
+            "nombre": "MET Lumbar de Fred Mitchell Sr. para ERS Derecho",
+            "posicion": "Decúbito lateral izquierdo. Flexión de caderas y rodillas del paciente hasta alcanzar el segmento lumbar bloqueado; rotación de tronco hacia la izquierda para poner en tensión la faceta cerrada.",
+            "musculo_motor": "Cuadrado lumbar derecho y multífidos extensores derechos.",
+            "accion": "El paciente realiza una suave contracción isométrica intentando extender y rotar el tronco a la derecha contra la resistencia manual fija del clínico por 7-10 s al 20%.",
+            "fase_post": "En fase de relajación, flexionar suavemente las piernas y acentuar la rotación de tronco hacia la izquierda para desimbricar la faceta articular (3 a 5 ciclos)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Cuadrado lumbar derecho (liberación miofascial transversal y presión isquémica)",
+                "Multífidos lumbares derechos hipertrofiados / espasmódicos",
+                "Erectores espinales lumbares homolaterales",
+                "Ligamento iliolumbar fascículo superior e inferior derecho"
+            ],
+            "precaucion_reactiva": "Descartar síndrome facetario inflamatorio agudo antes de aplicar palancas de torsión en flexión.",
+            "activar": [
+                "Recto anterior y oblicuos abdominales en flexión controlada",
+                "Transverso del abdomen para descompresión lumbar",
+                "Glúteo mayor en retroversión activa",
+                "Disociación en descarga: Cat-Camel segmentario lumbar"
+            ],
+            "criterios_retorno": "Flexión lumbar activa indolora con apertura simétrica del espacio interespinoso y prueba del resorte elástica."
+        }
+    },
+
+    "LUMBAR_ERS_I": {
+        "nombre_clinico": "ERS Izquierdo (L1-L5) — Extensión-Rotación-Inclinación Izquierda",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Acoplamiento Facetario Homolateral Fryette II (Extensión + Rotación I + Inclinación I)",
+        "criterios_diagnosticos": {
+            "eias": "Neutra / Adaptativa",
+            "eips": "Neutra",
+            "cresta": "Nivelada",
+            "isquion": "Nivelado",
+            "sinfisis": "Alineada",
+            "surco_sacro": "Adaptativo simétrico",
+            "ail": "Simétrico",
+            "maleolo_supino": "Simétrico",
+            "long_sitting": "Sin dismetría dinámica",
+            "pierna_supino_prono": "Simétrico",
+            "spring_test": "Positivo rígido focal izquierdo",
+            "tejidos_blandos": "Espasmo severo de Cuadrado Lumbar izquierdo, Psoas mayor izquierdo en tensión reactiva, Multífidos homolaterales e iliocostal; alta tensión en ligamento iliolumbar izquierdo",
+            "palpacion_clinica": "La apófisis transversa izquierda se palpa posterior en neutro y se hace notablemente prominente y dolorosa en flexión anterior de tronco. Apófisis espinosa desviada a la derecha. En extensión completa de tronco (posición de esfinge), la asimetría se reduce al converger ambas facetas.",
+            "dinamica_facetaria": "Restricción de apertura (desimbricación / divergencia) de la carilla articular derecha en flexión. Faceta izquierda bloqueada en imbricación/extensión.",
+            "hallazgos": "Transversa izquierda posterior en flexión, mejora en extensión, espinosa a la derecha, carilla derecha no abre en flexión, Cuadrado Lumbar y multífidos izquierdos espásticos."
+        },
+        "ajuste_articular": {
+            "tecnica": "Puesta en Tensión en Rotación con Flexión (Lumbar Roll para ERS)",
+            "posicion_paciente": "Decúbito lateral derecho (lado de la faceta imbricada izquierda hacia arriba). Marcada flexión de ambas caderas y rodillas hasta tensar el nivel segmentario afectado.",
+            "pcc": "Pisiforme / eminencia hipotenar del clínico.",
+            "pcp": "Apófisis mamilar izquierda / aspecto posterior del proceso transverso.",
+            "linea_correccion": "Vector rotatorio con palanca en flexión y desrotación derecha para abrir la carilla articular fija. Empuje de posterior a anterior y de craneal a caudal.",
+            "advertencia": "Evitar empujes en hiperextensión que puedan comprimir el foramen o irritar la cápsula facetaria."
+        },
+        "tecnica_met": {
+            "nombre": "MET Lumbar de Fred Mitchell Sr. para ERS Izquierdo",
+            "posicion": "Decúbito lateral derecho. Caderas flexionadas a 90° o más hasta focalizar la flexión en el segmento; rotación del tórax hacia la derecha hasta la barrera motriz.",
+            "musculo_motor": "Cuadrado lumbar izquierdo y multífidos izquierdos.",
+            "accion": "El paciente realiza contracción isométrica al 20% intentando extender y rotar el tronco a la izquierda contra la resistencia inamovible del clínico por 7-10 s.",
+            "fase_post": "En relajación, ganar mayor flexión y rotación derecha pasivas para abrir la faceta articular bloqueada (3 a 5 ciclos)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Cuadrado lumbar izquierdo",
+                "Multífidos lumbares izquierdos",
+                "Erectores espinales ipsilaterales",
+                "Ligamento iliolumbar izquierdo"
+            ],
+            "precaucion_reactiva": "Proteger la raíz nerviosa emergente homolateral de fuerzas de cizallamiento en rotación.",
+            "activar": [
+                "Abdominales oblicuos y transverso en flexión",
+                "Core antilordótico funcional",
+                "Glúteo mayor en retroversión",
+                "Disociación en flexión pasiva/activa lumbopélvica"
+            ],
+            "criterios_retorno": "Flexión de tronco completa sin desviación lateral antiálgica ni dolor facetario focal."
+        }
+    },
+
+    "LUMBAR_NSR": {
+        "nombre_clinico": "NSR Grupo Lumbar — Disfunción Adaptativa Neutra (Fryette I)",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Acoplamiento Facetario Heterolateral Fryette I (Neutro + Inclinación y Rotación a Lados Opuestos)",
+        "criterios_diagnosticos": {
+            "eias": "Adaptativa / Frecuente asociación con asimetría ilíaca ascendida o torsión sacra",
+            "eips": "Adaptativa al plano frontal",
+            "cresta": "Elevada en el lado de la concavidad de la curva",
+            "isquion": "Nivelado o adaptativo",
+            "sinfisis": "Alineada",
+            "surco_sacro": "Profundo en el lado convexo rotacional",
+            "ail": "Adaptativo",
+            "maleolo_supino": "Falsa dismetría secundaria por inclinación pélvica",
+            "long_sitting": "Modulación funcional sin inversión rígida pura",
+            "pierna_supino_prono": "Dismetría funcional adaptativa",
+            "spring_test": "Elasticidad conservada con resistencia moderada a lo largo del grupo lumbar",
+            "tejidos_blandos": "Tensión y acortamiento crónico del Cuadrado Lumbar y Psoas en la concavidad; inhibición y elongación de multífidos en la convexidad; tensión en fascia toracolumbar",
+            "palpacion_clinica": "Afecta a un grupo de 3 o más vértebras lumbares (típicamente L1-L4 o L2-L5). Las apófisis transversas se palpan prominentes en el lado de la convexidad en posición neutra. La asimetría no se modifica sustancialmente ni en flexión ni en extensión de tronco (característica cardinal de Fryette I).",
+            "dinamica_facetaria": "Movimiento multi-segmentario acoplado en neutro: los cuerpos vertebrales rotan hacia la convexidad de la curva y se inclinan hacia la concavidad sin bloqueo articular de una carilla individual.",
+            "hallazgos": "Grupo lumbar en curva con transversas prominentes en convexidad en neutro, sin cambio marcado en flexión/extensión, cuadrado lumbar en concavidad acortado."
+        },
+        "ajuste_articular": {
+            "tecnica": "Movilización Articular Segmentaria Rítmica y Desrotación en Grupo",
+            "posicion_paciente": "Decúbito lateral con la concavidad de la curva lumbar hacia abajo (apoyada en la camilla) con soporte/rollo lumbar para abrir la curva.",
+            "pcc": "Palma de la mano / antebrazo con contacto suave y amplio.",
+            "pcp": "Ápice de la convexidad del grupo lumbar sobre procesos transversos.",
+            "linea_correccion": "Movilización rítmica grado III-IV de oscilación lateral a medial y desrotación suave en neutro. No se requiere empuje de alta velocidad HVLA monoarticular agresivo.",
+            "advertencia": "Al ser una disfunción predominantemente adaptativa, la corrección debe dirigirse a la causa primaria (disfunción sacroilíaca, acortamiento de miembro o compensación descendente torácica)."
+        },
+        "tecnica_met": {
+            "nombre": "MET para Grupo Lumbar NSR (Fred Mitchell Sr.)",
+            "posicion": "Sedente o decúbito lateral con el lado de la concavidad hacia arriba. El clínico induce inclinación lateral hacia la convexidad para estirar el lado cóncavo y desrotar el grupo lumbar.",
+            "musculo_motor": "Cuadrado lumbar e iliocostal del lado cóncavo.",
+            "accion": "El paciente intenta inclinarse suavemente hacia el lado de la concavidad al 20% por 7-10 s contra la resistencia firme del clínico.",
+            "fase_post": "En relajación, aumentar la inclinación lateral correctora hacia la convexidad para elongar el grupo vertebral acortado (3 a 5 ciclos)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Cuadrado lumbar del lado cóncavo",
+                "Psoas mayor del lado cóncavo",
+                "Fascia toracolumbar y masa común erectora ipsilateral a la concavidad",
+                "Ligamento iliolumbar del lado elevado"
+            ],
+            "precaucion_reactiva": "No realizar empujes HVLA enérgicos directos sobre el ápice de la curva sin antes tratar la pelvis y liberar los tejidos blandos de la concavidad.",
+            "activar": [
+                "Multífidos lumbares del lado de la convexidad",
+                "Estabilizadores lumbopélvicos en plano frontal (Side Plank del lado convexo)",
+                "Glúteo medio contralateral en apoyo unipodal",
+                "Ejercicios de auto-elongación axial y respiración diafragmática asimétrica"
+            ],
+            "criterios_retorno": "Nivelación de crestas ilíacas en bipedestación, simetría en la prueba de flexión lateral de tronco y resolución de la curva compensatoria."
+        }
+    },
+
+    "LUMBAR_ESPONDILOLISTESIS_L5S1": {
+        "nombre_clinico": "Espondilolistesis / Inestabilidad Lumbosacra L5-S1",
+        "categoria": "Disfunciones Lumbares (L1-L5)",
+        "eje_movimiento": "Cizallamiento Sagital Anterior L5 sobre S1 (Inestabilidad / Falla de Contención Pars)",
+        "criterios_diagnosticos": {
+            "eias": "Anteversión pélvica bilateral adaptativa (ambas EIAS descendidas)",
+            "eips": "Ascendidas bilateralmente por hiperlordosis lumbosacra",
+            "cresta": "Niveladas simétricas",
+            "isquion": "Nivelados",
+            "sinfisis": "Descendida bilateralmente",
+            "surco_sacro": "Bilateralmente profundo / horizontalización de la base sacra",
+            "ail": "Simétrico",
+            "maleolo_supino": "Simétrico bilateral",
+            "long_sitting": "Sin dismetría funcional",
+            "pierna_supino_prono": "Longitudes simétricas",
+            "spring_test": "FALSA HIPERMOVILIDAD DOLOROSA / Alerta de cizallamiento anterior inestable",
+            "tejidos_blandos": "Espasmo severo protector bilateral de Psoas mayor y masa de erectores lumbares; tensión extrema en ligamento longitudinal anterior; multífidos con pérdida de control motor segmentario",
+            "palpacion_clinica": "Signo del escalón palpable (Step-off sign) sobre la línea media espinosa: la apófisis espinosa de L5 se palpa hundida/anteriorizada respecto a S1, generando un escalón palpable inmediato en L4-L5. Dolor a la palpación interespinosa y a la percusión suave.",
+            "dinamica_facetaria": "Pérdida de la contención facetaria posterior bilateral (defecto de la pars interarticularis / espondilolisis ístmica o degeneración articular severa). Deslizamiento anterior del cuerpo de L5 sobre la plataforma sacra S1 con disminución del diámetro foraminal en hiperextensión.",
+            "hallazgos": "Signo del escalón L5-S1 palpable, dolor a la extensión activa (Stork test positivo), hiperlordosis reactiva, espasmo defensivo de psoas y erectores espinales."
+        },
+        "ajuste_articular": {
+            "tecnica": "CONTRAINDICACIÓN ABSOLUTA DE EMPUJE HVLA POSTERIOR-ANTERIOR (P-A) SOBRE L5",
+            "posicion_paciente": "Decúbito supino o decúbito lateral descompresivo con triple flexión de miembros inferiores (postura de Williams).",
+            "pcc": "N/A — Maniobra de empuje directo contraindicada.",
+            "pcp": "N/A — Prohibido empuje P-A sobre segmento inestable.",
+            "linea_correccion": "Descompresión axial suave y movilización pasiva en flexión lumbosacra grado I-II para apertura foraminal sin empuje brusco.",
+            "advertencia": "CONTRAINDICADO cualquier empuje de alta velocidad (HVLA) o hiperextensión forzada. Riesgo de incremento del cizallamiento sagital, daño de la cauda equina o neuropraxia de raíces L5/S1."
+        },
+        "tecnica_met": {
+            "nombre": "MET Descompresiva en Flexión Lumbar (Fred Mitchell Sr.)",
+            "posicion": "Decúbito supino con caderas y rodillas flexionadas a 90° apoyadas contra el tronco del terapeuta (postura neutra o en leve retroversión pélvica).",
+            "musculo_motor": "Músculos abdominales profundos y glúteo mayor.",
+            "accion": "El paciente realiza una contracción isométrica suave al 15-20% intentando empujar las rodillas suavemente hacia la extensión contra el pecho del clínico por 7-10 s, induciendo co-activación refleja del core.",
+            "fase_post": "En relajación, acompañar pasivamente las rodillas hacia una mayor flexión suave hacia el pecho para abrir los forámenes L5-S1 y desestresar la charnela (3 a 5 ciclos)."
+        },
+        "abordaje_miofascial": {
+            "inhibir": [
+                "Psoas mayor bilateral (inhibición posicional suave / Strain-Counterstrain, sin hiperextensión)",
+                "Erectores espinales lumbares en espasmo hipertónico defensivo",
+                "Fascia toracolumbar lumbosacra",
+                "Cuadrado lumbar bilateral"
+            ],
+            "precaucion_reactiva": "Prohibido estiramiento en extensión de cadera forzada o presión directa profunda sobre el segmento L5.",
+            "activar": [
+                "Transverso del abdomen y oblicuos internos (control motor antilordótico en supino / Dead Bug modificado)",
+                "Glúteo mayor bilateral con retroversión pélvica activa (puente pélvico en rango medio)",
+                "Musculatura del suelo pélvico y diafragma en respiración controlada",
+                "Reeducación del ritmo lumbopélvico evitando el colapso en hiperextensión"
+            ],
+            "criterios_retorno": "Control motor de la zona neutra lumbosacra en flexión/extensión sin dolor, ausencia de signos neurológicos y estabilidad dinámica en bipedestación."
         }
     }
+
 }
 
 
